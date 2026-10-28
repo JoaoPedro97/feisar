@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FEISAR Exploded</title>
+<meta name="description" content="Scroll to take the FEISAR 3D-printed robot arm apart, link by link, in its real CAD geometry.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0a0d12; --bg-2:#10141c; --bg-3:#171c26;
+  --fg:#eceae3; --fg-2:#b8b4aa; --fg-3:#777a82;
+  --line:#232a36; --line-2:#2f3846;
+  --accent:#ff6a1a; --accent-2:#ff8f4d; --steel:#78aee6;
+  --head:"Barlow Condensed","Arial Narrow",sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} }
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+[hidden]{display:none !important}
+
+/* fixed stage */
+#stage{position:fixed;inset:0;z-index:0}
+#c3d{display:block;width:100%;height:100%;touch-action:pan-y;cursor:grab}
+#c3d.dragging{cursor:grabbing}
+#stage::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 70% 40%,rgba(23,28,38,.0) 0%,rgba(10,13,18,.55) 70%,var(--bg) 100%);pointer-events:none}
+.load{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-3);transition:opacity .4s}
+.load.off{opacity:0;visibility:hidden}
+
+/* 3D tag */
+.tag{position:fixed;left:0;top:0;z-index:2;pointer-events:none;opacity:0;transform:translate(-50%,-50%);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg-2);white-space:nowrap;transition:opacity .25s}
+.tag::before{content:"";display:block;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(255,106,26,.18);margin:0 auto 6px}
+.tag b{display:block;color:var(--fg);font-weight:500;letter-spacing:.08em}
+
+/* top bar */
+.top{position:fixed;inset:0 0 auto 0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:18px 28px;mix-blend-mode:normal;pointer-events:none}
+.top > *{pointer-events:auto}
+.brand{font-family:var(--head);font-weight:700;font-size:18px;letter-spacing:.08em;text-transform:uppercase;text-decoration:none}
+.brand i{color:var(--accent);font-style:normal}
+.top nav{display:flex;gap:22px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.top nav a{text-decoration:none;color:var(--fg-2)} .top nav a:hover{color:var(--fg)}
+
+/* rail */
+.rail{position:fixed;right:22px;top:50%;transform:translateY(-50%);z-index:5;display:grid;gap:14px}
+.rail a{display:flex;align-items:center;justify-content:flex-end;gap:10px;text-decoration:none;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-3)}
+.rail a span{opacity:0;transform:translateX(6px);transition:opacity .3s,transform .3s}
+.rail a:hover span,.rail a.on span{opacity:1;transform:none}
+.rail a::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--line-2);transition:background .3s,transform .3s}
+.rail a.on::after{background:var(--accent);transform:scale(1.5)}
+
+/* readout */
+.readout{position:fixed;left:28px;bottom:24px;z-index:5;transition:opacity .4s;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg-3);display:grid;gap:4px}
+.readout b{color:var(--fg);font-weight:500}
+.readout .n{font-family:var(--head);font-size:34px;font-weight:600;letter-spacing:.02em;line-height:1;color:var(--fg)}
+.readout .n i{font-style:normal;color:var(--fg-3);font-size:18px}
+.hint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:5;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-3);display:grid;justify-items:center;gap:8px;transition:opacity .6s}
+.hint.off{opacity:0}
+.hint em{display:block;width:1px;height:34px;background:linear-gradient(var(--fg-3),transparent);animation:drop 1.8s var(--ease) infinite}
+@keyframes drop{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+@media (prefers-reduced-motion:reduce){ .hint em{animation:none} }
+
+/* chapters */
+main{position:relative;z-index:1}
+.ch{min-height:100vh;display:flex;align-items:center;padding:96px 28px 96px}
+.ch.first{min-height:110vh}
+.ch.last{min-height:120vh;align-items:flex-end;padding-bottom:140px}
+.card{width:min(440px,100%);background:rgba(16,20,28,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line-2);padding:26px 28px;transition:opacity .3s}
+.eyebrow{margin:0 0 10px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.eyebrow span{color:var(--fg-3)}
+h1,h2{font-family:var(--head);font-weight:700;text-transform:uppercase;letter-spacing:.01em;line-height:.95;margin:0 0 14px}
+h1{font-size:clamp(64px,10vw,124px);line-height:.88}
+h1 small{display:block;font-size:clamp(20px,2.6vw,28px);font-weight:600;letter-spacing:.04em;color:var(--fg-2);margin-top:10px;line-height:1.1}
+h2{font-size:clamp(34px,4.2vw,52px)}
+.card p{margin:0 0 12px;color:var(--fg-2)} .card p:last-child{margin-bottom:0}
+.card p b{color:var(--fg);font-weight:500}
+.kv{margin:16px 0 0;padding:0;list-style:none;border-top:1px solid var(--line);font-family:var(--mono);font-size:12px}
+.kv li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);color:var(--fg-3)}
+.kv li b{color:var(--fg);font-weight:500;text-align:right;letter-spacing:.02em}
+.note{margin-top:12px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--fg-3)}
+.hero-card{background:none;border:0;backdrop-filter:none;-webkit-backdrop-filter:none;padding:0;width:min(640px,100%)}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:12px 18px;border:1px solid var(--line-2);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;color:var(--fg);background:rgba(16,20,28,.6);transition:border-color .3s,background .3s}
+.btn:hover{border-color:var(--fg-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#120a05}
+.btn.primary:hover{background:var(--accent-2);border-color:var(--accent-2)}
+
+/* last chapter */
+.outro{width:min(640px,100%)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin:0 0 26px}
+.stats div{background:rgba(16,20,28,.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:18px 20px}
+.stats b{display:block;font-family:var(--head);font-size:clamp(34px,4vw,52px);font-weight:600;line-height:1;letter-spacing:.01em}
+.stats b i{font-style:normal;color:var(--accent);font-size:.55em;margin-left:4px}
+.stats span{display:block;margin-top:6px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3)}
+footer{position:relative;z-index:1;padding:0 28px 28px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+@media (max-width:900px){
+  .top{padding:14px 16px} .top nav{gap:14px} .top nav a:nth-child(2){display:none}
+  .rail{right:12px;gap:12px} .rail a span{display:none}
+  .readout{left:16px;bottom:16px} .readout .n{font-size:26px}
+  .hint{display:none}
+  .ch{align-items:flex-end;padding:120px 16px 112px}
+  .ch.last{padding-bottom:120px}
+  .ch.first{align-items:flex-end}
+  .card{width:100%;padding:18px 20px;max-height:54vh;overflow:auto;font-size:15px;line-height:1.5}
+  .card h2{font-size:30px}
+  h1{font-size:clamp(56px,20vw,96px)}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .tag{display:none}
+  footer{padding:0 16px 20px}
+}
+</style>
+</head>
+<body>
+
+<div id="stage" aria-hidden="true">
+  <canvas id="c3d"></canvas>
+  <div class="load" id="loadmsg">Loading model</div>
+</div>
+<div class="tag" id="tag"><b id="tagName">Base</b><span id="tagSub">J1</span></div>
+
+<header class="top">
+  <a class="brand" href="#top">Project <i>MIMICO</i></a>
+  <nav>
+    <a href="index.html">Full engineering log</a>
+    <a href="https://www.instagram.com/projectmimico/">@projectmimico</a>
+  </nav>
+</header>
+
+<nav class="rail" aria-label="Chapters" id="rail">
+  <a href="#top"><span>Feisar</span></a>
+  <a href="#ch1"><span>Exploded</span></a>
+  <a href="#ch2"><span>Base</span></a>
+  <a href="#ch3"><span>Waist</span></a>
+  <a href="#ch4"><span>Upper arm</span></a>
+  <a href="#ch5"><span>Elbow</span></a>
+  <a href="#ch6"><span>Forearm</span></a>
+  <a href="#ch7"><span>Motion</span></a>
+</nav>
+
+<div class="readout" id="readout">
+  <div><b id="rdCh">01</b> / 08</div>
+  <div class="n"><span id="rdR">0</span><i> mm</i> <span style="color:var(--fg-3);font-size:18px">·</span> <span id="rdH">0</span><i> mm</i></div>
+  <div>tip radius · tip height</div>
+</div>
+<div class="hint" id="hint"><em></em>Scroll to take it apart</div>
+
+<main>
+  <section class="ch first" id="top" data-ch="0">
+    <div class="card hero-card">
+      <p class="eyebrow">Engineering log <span>· interactive disassembly · real CAD of the 2025 arm, version A</span></p>
+      <h1>Feisar<small>One arm. Four joints. Five printed links.</small></h1>
+      <p>Everything that moves on this arm came off a home 3D printer, including the planetary reducers that carry the torque. Scroll to take it apart link by link and reducer by reducer; drag to look around. Simulated geometry, not a manufacturing model.</p>
+    </div>
+  </section>
+
+  <section class="ch" id="ch1" data-ch="1">
+    <div class="card">
+      <p class="eyebrow">01 <span>· exploded</span></p>
+      <h2>Five links, four reducers</h2>
+      <p>The structure is printed ABS. Each joint drives through a planetary reducer printed with the link that holds it, so the motors stay small and the arm stays light enough to lift its own weight in open loop.</p>
+      <ul class="kv">
+        <li>Motors<b>3 × NEMA 17 · 1 × NEMA 23</b></li>
+        <li>Drivers · controller<b>TB6600 / DM556 · ESP32</b></li>
+        <li>Build<b>5 weeks · July 2025</b></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="ch" id="ch2" data-ch="2">
+    <div class="card">
+      <p class="eyebrow">02 <span>· link 0 · base</span></p>
+      <h2>Base</h2>
+      <p>Holds the J1 motor and the reducer that turns the whole arm. The 2025 base used a single 6816 bearing and had about <b>0.7°</b> of backlash from a spreadsheet convention, roughly 8 mm at the end of the arm.</p>
+      <p>Inside, pulled apart along the axis: the NEMA 17, the sun, three planets in a carrier, the ring, the same again for the second stage, then the output bearing. Two stages of 1:7 make 1:49.</p>
+      <p>This is where the 2026 rebuild starts: the RPV1-B reducer, 1:41.33, generated tooth profiles, output on two 6010 bearings and an encoder reading the output directly. Nothing of it is printed yet.</p>
+      <ul class="kv">
+        <li>Reducer, 2025<b>RPV1 · 1:49</b></li>
+        <li>Reducer, 2026 design<b>RPV1-B · 1:41.33</b></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="ch" id="ch3" data-ch="3">
+    <div class="card">
+      <p class="eyebrow">03 <span>· link 1 · waist</span></p>
+      <h2>Waist</h2>
+      <p>Turns on J1 and carries the shoulder motor, the only NEMA 23 on the arm, 3 N·m through a second 1:49 RPV1. The orange parts are the RPV1 housings: the part of the project that has survived every rebuild since 2024.</p>
+      <p>Exploded inside: the NEMA 23 drives a second two-stage RPV1, sideways, straight into the upper arm.</p>
+      <ul class="kv">
+        <li>Axis<b>J1 · ±170°</b></li>
+        <li>Shoulder drive<b>NEMA 23 · 1:49</b></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="ch" id="ch4" data-ch="4">
+    <div class="card">
+      <p class="eyebrow">04 <span>· link 2 · upper arm</span></p>
+      <h2>Upper arm</h2>
+      <p>Pitches on J2. In version A it includes the extension link that takes the reach to 681 mm; version B uses a short link and gives up 160 mm. Both were checked pose by pose against the table and against the other links.</p>
+      <p>Inside the arm, the roll drive: a NEMA 17 and a two-stage RPV2 planetary, smaller than the RPV1, with an 80 mm bearing at the output.</p>
+      <ul class="kv">
+        <li>Axis<b>J2 · ±95°</b></li>
+        <li>Configurations<b>A extension · B short</b></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="ch" id="ch5" data-ch="5">
+    <div class="card">
+      <p class="eyebrow">05 <span>· link 3 · elbow</span></p>
+      <h2>Elbow</h2>
+      <p>Rolls on J3, along the upper arm, through a two-stage 1:41.8 planetary on a NEMA 17. The elbow motor sits here too, which keeps the forearm light and the roll inertia low.</p>
+      <p>Exploded inside: the elbow's own two-stage RPV2, driven across the housing, with the forearm bolted to its output bearing.</p>
+      <ul class="kv">
+        <li>Axis<b>J3 · ±180°</b></li>
+        <li>Roll drive<b>NEMA 17 · 1:41.8</b></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="ch" id="ch6" data-ch="6">
+    <div class="card">
+      <p class="eyebrow">06 <span>· link 4 · forearm</span></p>
+      <h2>Forearm</h2>
+      <p>Pitches on J4 through the largest ratio on the arm, a two-stage 1:80. It ends in the wrist flange: no wrist yet, no gripper yet. From the flange the arm reaches <b>681 mm</b> out and <b>914 mm</b> up.</p>
+      <ul class="kv">
+        <li>Axis<b>J4 · ±137°</b></li>
+        <li>Elbow drive<b>NEMA 17 · 1:80</b></li>
+        <li>Reach at the flange<b>681 / 914 mm</b></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="ch last" id="ch7" data-ch="7">
+    <div class="outro">
+      <div class="stats">
+        <div><b>4</b><span>motorised axes</span></div>
+        <div><b>681<i>mm</i></b><span>horizontal reach, version A</span></div>
+        <div><b>20,736</b><span>poses checked, mesh against mesh</span></div>
+        <div><b>0</b><span>link collisions inside the limits</span></div>
+      </div>
+      <div class="card" style="width:min(560px,100%)">
+        <p class="eyebrow">07 <span>· back together</span></p>
+        <h2>Within the limits, nothing touches</h2>
+        <p>The joint limits in the firmware come from this model: every combination of shoulder, elbow and roll on a 5° grid was tested for link-on-link contact and for the wrist dropping below the table. The motion here is the same pick-and-place used in the simulation videos.</p>
+        <div class="cta">
+          <a class="btn primary" href="index.html">Read the full log</a>
+          <a class="btn" href="https://www.instagram.com/projectmimico/">@projectmimico</a>
+        </div>
+        <p class="note">Link geometry from the CAD, decimated for the web. Reducer internals are the CAD parts, decimated for the web; motor bodies drawn as blocks. Reach and limits computed, not measured.</p>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>
+  <span>FEISAR · Project MIMICO · Porto Alegre, Brazil</span>
+  <span>Rev. 2026-10 · simulated where stated</span>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var canvas = document.getElementById('c3d'), stage = document.getElementById('stage'), loadmsg = document.getElementById('loadmsg');
+  var tag = document.getElementById('tag'), tagName = document.getElementById('tagName'), tagSub = document.getElementById('tagSub');
+  var readout = document.getElementById('readout'), rdCh = document.getElementById('rdCh'), rdR = document.getElementById('rdR'), rdH = document.getElementById('rdH'), hint = document.getElementById('hint');
+  var railLinks = Array.prototype.slice.call(document.querySelectorAll('#rail a'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('.ch'));
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.ch .card, .ch .outro'));
+
+  if (!window.THREE) { loadmsg.textContent = '3D unavailable'; return; }
+  var renderer;
+  try { renderer = new THREE.WebGLRenderer({canvas:canvas, antialias:true, alpha:true, powerPreference:'high-performance'}); }
+  catch(err) { loadmsg.textContent = 'WebGL unavailable'; return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  renderer.setClearColor(0x000000, 0);
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x0a0d12, 2600, 5200);
+  var camera = new THREE.PerspectiveCamera(30, 1, 10, 12000);
+  scene.add(new THREE.HemisphereLight(0xdfe8f6, 0x0a0d12, .75));
+  var key = new THREE.DirectionalLight(0xfff2e6, 1.15); key.position.set(700, 1500, 600); key.castShadow = true;
+  key.shadow.mapSize.set(2048,2048); key.shadow.camera.left=-1100; key.shadow.camera.right=1100; key.shadow.camera.top=1900; key.shadow.camera.bottom=-300; key.shadow.camera.near=200; key.shadow.camera.far=5000; key.shadow.bias=-0.0006;
+  scene.add(key);
+  var fill = new THREE.DirectionalLight(0x78aee6, .35); fill.position.set(-900, 500, -700); scene.add(fill);
+  var rim = new THREE.DirectionalLight(0xff6a1a, .45); rim.position.set(-300, 300, 1100); scene.add(rim);
+
+  var NAMES = ['G0_base','G1_ombro','G2_braco','G3_cotovelo','G4_antebraco'];
+  var COLORS = {G0_base:0x2a3140, G1_ombro:0xff6a1a, G2_braco:0xe6e2d9, G3_cotovelo:0xcfcac0, G4_antebraco:0xe6e2d9};
+  var LIFT = {G0_base:0, G1_ombro:110, G2_braco:260, G3_cotovelo:430, G4_antebraco:620};   /* exploded offset along Y, mm */
+  var LABEL = {G0_base:['Base','J1 motor · RPV1 1:49'], G1_ombro:['Waist','J1 · ±170°'], G2_braco:['Upper arm','J2 · ±95°'], G3_cotovelo:['Elbow','J3 roll · ±180°'], G4_antebraco:['Forearm','J4 · ±137° · flange']};
+  var links = {}, centroid = {}, axes = null, tipLocal = null, floorY = 0, ring = null;
+
+  /* chapter targets: az, el, dist, ty (target height), ex (explode 0..1), focus link, motion (0..1) */
+  var CH = [
+    {az:0.62, el:0.20, dist:2500, ty:430, ex:0, focus:null,          motion:0, innerAll:0},
+    {az:0.95, el:0.30, dist:3600, ty:720, ex:1, focus:null,          motion:0, innerAll:0.25},
+    {az:1.25, el:0.26, dist:1800, ty:230, ex:1, focus:'G0_base',     motion:0, innerAll:0},
+    {az:1.35, el:0.20, dist:1750, ty:330, ex:1, focus:'G1_ombro',    motion:0, innerAll:0},
+    {az:0.40, el:0.18, dist:1900, ty:700, ex:1, focus:'G2_braco',    motion:0, innerAll:0},
+    {az:-1.30,el:0.20, dist:1750, ty:1010,ex:1, focus:'G3_cotovelo', motion:0, innerAll:0},
+    {az:-0.55,el:0.26, dist:1900, ty:1400,ex:1, focus:'G4_antebraco',motion:0, innerAll:0},
+    {az:-0.95,el:0.22, dist:3000, ty:470, ex:0, focus:null,          motion:1, innerAll:0}
+  ];
+  /* reducer modules: the real internal parts from the CAD (decimated), housed in a link and exploded along the module axis */
+  var MODS = {G0_base:{motor:[42,48,-55]}, G1_ombro:{motor:[56,56,-75]}, G2_braco:{motor:[42,60,-75]}, G3_cotovelo:{motor:[42,60,-125]}};
+  var SPACING = 46, CLEAR = 300, modParts = {}, modAxis = {}, innerW = {}, innerT = {};
+  Object.keys(MODS).forEach(function(n){ innerW[n] = 0; innerT[n] = 0; modParts[n] = []; });
+  var MAT = {
+    gear: new THREE.MeshStandardMaterial({color:0xe6e2d9, flatShading:true, transparent:true, opacity:0, metalness:.05, roughness:.6}),
+    ring: new THREE.MeshStandardMaterial({color:0xff6a1a, flatShading:true, transparent:true, opacity:0, metalness:.05, roughness:.5}),
+    carrier: new THREE.MeshStandardMaterial({color:0x2a3140, flatShading:true, transparent:true, opacity:0, metalness:.2, roughness:.6}),
+    motor: new THREE.MeshStandardMaterial({color:0x1b1f28, flatShading:true, transparent:true, opacity:0, metalness:.5, roughness:.5}),
+    steel: new THREE.MeshStandardMaterial({color:0xaab7c6, flatShading:true, transparent:true, opacity:0, metalness:.85, roughness:.35})
+  };
+  function addPart(n, geo, mat, idx, pos){
+    var mesh = new THREE.Mesh(geo, mat.clone()); mesh.castShadow = true; mesh.receiveShadow = true; mesh.visible = false;
+    if (pos) mesh.position.copy(pos);
+    mesh.userData = {idx:idx, base:mesh.position.clone()}; links[n].add(mesh); modParts[n].push(mesh); return mesh;
+  }
+  function buildModules(json){
+    var bin = atob(json.data), buf = new ArrayBuffer(bin.length), u8 = new Uint8Array(buf);
+    for (var k=0;k<bin.length;k++) u8[k] = bin.charCodeAt(k);
+    var off = 0, c = json.center, s = json.scale;
+    Object.keys(json.axes).forEach(function(n){ var a = json.axes[n]; modAxis[n] = {p:new THREE.Vector3(a[0][0],a[0][1],a[0][2]), d:new THREE.Vector3(a[1][0],a[1][1],a[1][2]).normalize()}; });
+    json.parts.forEach(function(P){
+      var nv = P.nv, nf = P.nf;
+      var qv = new Int16Array(buf.slice(off, off + nv*6)); off += nv*6;
+      var idx = new Uint32Array(buf.slice(off, off + nf*12)); off += nf*12;
+      var pos = new Float32Array(nv*3);
+      for (var i=0;i<nv*3;i+=3){ pos[i] = qv[i]/32767*s + c[0]; pos[i+1] = qv[i+1]/32767*s + c[1]; pos[i+2] = qv[i+2]/32767*s + c[2]; }
+      var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos,3)); g.setIndex(new THREE.BufferAttribute(idx,1)); g.computeVertexNormals();
+      if (links[P.module]) addPart(P.module, g, MAT[P.mat] || MAT.steel, P.idx);
+    });
+    /* motor bodies, schematic: the real ones are part of the link shells */
+    Object.keys(MODS).forEach(function(n){
+      var A = modAxis[n], M = MODS[n].motor; if (!A || !links[n]) return;
+      var geo = new THREE.BoxGeometry(M[0], M[1], M[0]);
+      var q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), A.d);
+      var mesh = addPart(n, geo, MAT.motor, 0, A.p.clone().add(A.d.clone().multiplyScalar(M[2])));
+      mesh.quaternion.copy(q);
+    });
+  }
+  var tmpD = new THREE.Vector3();
+  function updateModules(sm){
+    Object.keys(MODS).forEach(function(n){
+      innerW[n] += (innerT[n]-innerW[n])*sm; var w = innerW[n], list = modParts[n], A = modAxis[n]; if (!list.length || !A) return;
+      var op = Math.min(1, w*1.8);
+      for (var i=0;i<list.length;i++){ var P = list[i]; tmpD.copy(A.d).multiplyScalar(P.userData.idx*SPACING*w); P.position.copy(P.userData.base).add(tmpD); P.material.opacity = op; P.visible = op > 0.02; P.castShadow = op > 0.5; }
+    });
+  }
+  /* extra lift for the links above a module that explodes upwards, so nothing passes through anything */
+  var UPWARD = {G0_base:1, G2_braco:1};
+  function clearance(name){
+    var i = NAMES.indexOf(name), extra = 0;
+    Object.keys(UPWARD).forEach(function(m){ if (NAMES.indexOf(m) < i) extra += CLEAR*innerW[m]; });
+    return extra;
+  }
+  var cur = {az:CH[0].az, el:CH[0].el, dist:CH[0].dist, ty:CH[0].ty, ex:0, motion:0};
+  var opa = {}, opaT = {}; NAMES.forEach(function(n){ opa[n] = 1; opaT[n] = 1; });
+  var focusW = 0, focusName = null, tIdx = 0;
+
+  /* orbit interaction on top of the scripted camera */
+  var dAz = 0, dAzT = 0, dEl = 0, dElT = 0, dragging = false, lastX = 0, lastY = 0, drift = 0, lastInteract = -1e9;
+  function onDown(x,y){ dragging = true; lastX=x; lastY=y; canvas.classList.add('dragging'); lastInteract = performance.now(); }
+  function onMove(x,y){ if(!dragging) return; dAzT -= (x-lastX)*0.006; dElT = Math.max(-0.4, Math.min(0.6, dElT + (y-lastY)*0.004)); lastX=x; lastY=y; lastInteract = performance.now(); }
+  function onUp(){ dragging=false; canvas.classList.remove('dragging'); }
+  canvas.addEventListener('pointerdown', function(e){ if (e.pointerType==='touch') return; canvas.setPointerCapture(e.pointerId); onDown(e.clientX,e.clientY); });
+  canvas.addEventListener('pointermove', function(e){ if (e.pointerType==='touch') return; onMove(e.clientX,e.clientY); });
+  canvas.addEventListener('pointerup', onUp); canvas.addEventListener('pointercancel', onUp);
+  canvas.addEventListener('touchstart', function(e){ if (e.touches.length===1) onDown(e.touches[0].clientX, e.touches[0].clientY); }, {passive:true});
+  canvas.addEventListener('touchmove', function(e){ if (e.touches.length===1 && dragging) { var dx = e.touches[0].clientX-lastX; if (Math.abs(dx) > 2) { dAzT -= dx*0.007; lastX = e.touches[0].clientX; lastInteract = performance.now(); } } }, {passive:true});
+  canvas.addEventListener('touchend', function(){ dragging=false; }, {passive:true});
+
+  /* kinematics */
+  var DEMO = [[1.6,[0,0,0,0]],[2.4,[70,-45,0,75]],[1.8,[70,-62,0,112]],[2.6,[-55,-62,0,112]],[2.0,[-55,-25,90,45]],[2.4,[0,32,0,-80]],[1.8,[0,0,0,0]]];
+  var demoT = 0, demoTotal = DEMO.reduce(function(s,k){ return s+k[0]; },0);
+  function demoPose(t){
+    t = t % demoTotal; var prev = DEMO[DEMO.length-1][1], acc = 0;
+    for (var i=0;i<DEMO.length;i++){ var d = DEMO[i][0], nxt = DEMO[i][1];
+      if (t < acc + d) { var k = (t-acc)/d; k = 0.5-0.5*Math.cos(Math.PI*k); return [0,1,2,3].map(function(j){ return prev[j] + (nxt[j]-prev[j])*k; }); }
+      acc += d; prev = nxt; }
+    return prev;
+  }
+  function rotAbout(p, d, deg){
+    var m = new THREE.Matrix4().makeRotationAxis(d, deg*Math.PI/180);
+    var t1 = new THREE.Matrix4().makeTranslation(-p.x,-p.y,-p.z), t2 = new THREE.Matrix4().makeTranslation(p.x,p.y,p.z);
+    return t2.multiply(m).multiply(t1);
+  }
+  var tmpV = new THREE.Vector3(), lift = new THREE.Matrix4();
+  function applyPose(qq, ex){
+    if (!axes) return;
+    var acc = new THREE.Matrix4();
+    for (var i=0;i<5;i++){
+      var n = NAMES[i];
+      if (i > 0) acc.multiply(rotAbout(axes[i-1].p, axes[i-1].d, qq[i-1]));
+      lift.makeTranslation(0, LIFT[n]*ex + clearance(n)*ex, 0);
+      var L = links[n]; if (L) { L.matrix.copy(lift).multiply(acc); L.matrixWorldNeedsUpdate = true; }
+    }
+    if (tipLocal) { tmpV.copy(tipLocal).applyMatrix4(acc); var r = Math.hypot(tmpV.x-axes[0].p.x, tmpV.z-axes[0].p.z); rdR.textContent = Math.round(r); rdH.textContent = Math.round(tmpV.y - floorY); }
+  }
+
+  /* model */
+  function buildModel(json){
+    var meta = json;
+    var bin = atob(meta.data), buf = new ArrayBuffer(bin.length), u8 = new Uint8Array(buf);
+    for (var k=0;k<bin.length;k++) u8[k] = bin.charCodeAt(k);
+    var off = 0, c = meta.center, s = meta.scale; floorY = meta.floorY;
+    meta.links.forEach(function(L){
+      var nv = L.nv, nf = L.nf;
+      var qv = new Int16Array(buf.slice(off, off + nv*6)); off += nv*6;
+      var idx = new Uint32Array(buf.slice(off, off + nf*12)); off += nf*12;
+      var pos = new Float32Array(nv*3);
+      for (var i=0;i<nv*3;i+=3){ pos[i] = qv[i]/32767*s + c[0]; pos[i+1] = qv[i+1]/32767*s + c[1]; pos[i+2] = qv[i+2]/32767*s + c[2]; }
+      var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos,3)); g.setIndex(new THREE.BufferAttribute(idx,1)); g.computeVertexNormals(); g.computeBoundingBox();
+      centroid[L.name] = g.boundingBox.getCenter(new THREE.Vector3());
+      var mat = new THREE.MeshStandardMaterial({color: COLORS[L.name] || 0xcccccc, flatShading:true, transparent:true, opacity:1, metalness: L.name==='G0_base' ? .35 : .08, roughness: L.name==='G1_ombro' ? .5 : .62, emissive: new THREE.Color(COLORS[L.name] || 0xcccccc), emissiveIntensity:0});
+      var mesh = new THREE.Mesh(g, mat); mesh.matrixAutoUpdate = false; mesh.castShadow = true; mesh.receiveShadow = true;
+      links[L.name] = mesh; scene.add(mesh);
+    });
+    axes = ['J1','J2','J3','J4'].map(function(k){ var a = meta.axes[k]; return {p:new THREE.Vector3(a[0][0],a[0][1],a[0][2]), d:new THREE.Vector3(a[1][0],a[1][1],a[1][2]).normalize()}; });
+    tipLocal = new THREE.Vector3(meta.tip[0], meta.tip[1], meta.tip[2]);
+    fetch('model/feisar_a_int.json').then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }).then(buildModules).catch(function(err){ console.error('internals', err); });
+    var floor = new THREE.Mesh(new THREE.CircleGeometry(1800, 72), new THREE.MeshStandardMaterial({color:0x0e121a, roughness:.95, metalness:0}));
+    floor.rotation.x = -Math.PI/2; floor.position.y = floorY - 1; floor.receiveShadow = true; scene.add(floor);
+    var grid = new THREE.GridHelper(2400, 24, 0x334052, 0x1c2430); grid.position.y = floorY + 0.5; grid.material.transparent = true; grid.material.opacity = .5; scene.add(grid);
+    ring = new THREE.Mesh(new THREE.RingGeometry(676, 686, 128), new THREE.MeshBasicMaterial({color:0xff6a1a, transparent:true, opacity:0, side:THREE.DoubleSide}));
+    ring.rotation.x = -Math.PI/2; ring.position.set(axes[0].p.x, floorY + 1, axes[0].p.z); scene.add(ring);
+    loadmsg.classList.add('off');
+    applyPose([0,0,0,0], 0);
+  }
+  fetch('model/feisar_a.json').then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }).then(buildModel).catch(function(err){ loadmsg.textContent = 'Model could not load'; console.error(err); });
+
+  /* scroll → continuous chapter index */
+  var tops = [];
+  function measure(){ tops = sections.map(function(s){ return s.offsetTop; }); }
+  function smooth(x){ x = Math.max(0, Math.min(1, x)); return x*x*(3-2*x); }
+  function chapterIndex(){
+    var y = window.scrollY + window.innerHeight*0.5;   /* viewport centre */
+    var n = tops.length; if (!n) return 0;
+    if (y <= tops[0] + window.innerHeight*0.5) return 0;
+    for (var i=0;i<n-1;i++){
+      var a = tops[i] + window.innerHeight*0.5, b = tops[i+1] + window.innerHeight*0.5;
+      if (y < b) return i + smooth((y-a)/(b-a));
+    }
+    return n-1;
+  }
+  function lerp(a,b,k){ return a + (b-a)*k; }
+  function targetsFor(t){
+    var i = Math.min(CH.length-2, Math.floor(t)), k = t - i, A = CH[i], B = CH[i+1];
+    var out = {az:lerp(A.az,B.az,k), el:lerp(A.el,B.el,k), dist:lerp(A.dist,B.dist,k), ty:lerp(A.ty,B.ty,k), ex:lerp(A.ex,B.ex,k), motion:lerp(A.motion,B.motion,k)};
+    NAMES.forEach(function(n){
+      var ia = A.focus ? (A.focus===n ? 1 : 0) : A.innerAll, ib = B.focus ? (B.focus===n ? 1 : 0) : B.innerAll;
+      var iw = MODS[n] ? lerp(ia, ib, k) : 0; if (MODS[n]) innerT[n] = iw;
+      var oa = A.focus ? (A.focus===n ? 1 : 0.14) : 1, ob = B.focus ? (B.focus===n ? 1 : 0.14) : 1;
+      opaT[n] = lerp(oa, ob, k) * (1 - 0.72*iw);
+    });
+    var f = k < 0.5 ? A.focus : B.focus, fw = k < 0.5 ? (A.focus ? 1-2*k : 0) : (B.focus ? 2*k-1 : 0);
+    out.focus = f; out.focusW = f ? fw : 0;
+    return out;
+  }
+  window.addEventListener('resize', function(){ measure(); resize(); });
+  measure();
+  window.addEventListener('scroll', function(){ if (window.scrollY > 80) hint.classList.add('off'); }, {passive:true});
+
+  /* size + loop */
+  function resize(){
+    var w = window.innerWidth, h = window.innerHeight; if (!w || !h) return;
+    renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix();
+    camera.setViewOffset(w, h, (w > 900 ? -w*0.10 : 0), (w > 900 ? 0 : h*0.16), w, h);
+  }
+  resize();
+  var tPrev = performance.now(), q = [0,0,0,0], home = [0,0,0,0], railOn = -1, lastMeasure = 0;
+  function loop(t){
+    requestAnimationFrame(loop);
+    var dtRaw = Math.min(0.5, (t - tPrev)/1000), dt = Math.min(0.05, dtRaw); tPrev = t;
+    if (document.hidden) return;
+    if (t - lastMeasure > 1000) { measure(); lastMeasure = t; }
+    var ti = chapterIndex(); tIdx = ti;
+    var T = targetsFor(ti), sm = reduce ? 1 : 1 - Math.exp(-dtRaw*6);
+    cur.az += (T.az-cur.az)*sm; cur.el += (T.el-cur.el)*sm; cur.dist += (T.dist-cur.dist)*sm; cur.ty += (T.ty-cur.ty)*sm; cur.ex += (T.ex-cur.ex)*sm; cur.motion += (T.motion-cur.motion)*sm;
+    NAMES.forEach(function(n){ opa[n] += (opaT[n]-opa[n])*sm; var L = links[n]; if (L) { L.material.opacity = opa[n]; L.material.depthWrite = opa[n] > 0.9; L.material.emissiveIntensity = (T.focus===n ? 0.18*T.focusW : 0) ; L.castShadow = opa[n] > 0.5; } });
+    updateModules(sm);
+    /* pose */
+    if (!reduce) demoT += dt * cur.motion;
+    var dp = demoPose(demoT), m = cur.motion;
+    q = [0,1,2,3].map(function(j){ return lerp(home[j], dp[j], m); });
+    applyPose(q, cur.ex);
+    if (ring) ring.material.opacity = 0.4*cur.motion;
+    /* camera */
+    if (!reduce && !dragging && (t - lastInteract) > 3000) { dAzT *= 0.98; dElT *= 0.98; }
+    drift = reduce ? 0 : Math.sin(t*0.00025)*0.10;
+    dAz += (dAzT-dAz)*Math.min(1, dtRaw*8); dEl += (dElT-dEl)*Math.min(1, dtRaw*8);
+    var az = cur.az + drift + dAz, el = Math.max(-0.05, Math.min(1.2, cur.el + dEl));
+    var tx = axes ? axes[0].p.x : 0, tz = axes ? axes[0].p.z : 0;
+    camera.position.set(tx + cur.dist*Math.sin(az)*Math.cos(el), cur.ty + cur.dist*Math.sin(el), tz + cur.dist*Math.cos(az)*Math.cos(el));
+    camera.lookAt(tx, cur.ty, tz);
+    renderer.render(scene, camera);
+    /* tag */
+    if (T.focus && links[T.focus] && T.focusW > 0.02) {
+      tmpV.copy(centroid[T.focus]).applyMatrix4(links[T.focus].matrix).project(camera);
+      var w = window.innerWidth, h = window.innerHeight;
+      tag.style.transform = 'translate(' + ((tmpV.x*0.5+0.5)*w) + 'px,' + ((-tmpV.y*0.5+0.5)*h - 36) + 'px) translate(-50%,-100%)';
+      tag.style.opacity = T.focusW;
+      if (focusName !== T.focus) { focusName = T.focus; tagName.textContent = LABEL[T.focus][0]; tagSub.textContent = LABEL[T.focus][1]; }
+    } else tag.style.opacity = 0;
+    /* chapter UI */
+    var ci = Math.round(ti);
+    if (ci !== railOn) { railOn = ci; railLinks.forEach(function(a,i){ a.classList.toggle('on', i===ci); }); rdCh.textContent = (ci+1 < 10 ? '0' : '') + (ci+1); readout.style.opacity = ci === CH.length-1 ? 0 : 1; }
+    var vh = window.innerHeight;
+    cards.forEach(function(c){ var r = c.getBoundingClientRect(), mid = r.top + r.height/2, d = Math.abs(mid - vh*0.5) / (vh*0.6); c.style.opacity = Math.max(0.08, 1 - Math.max(0, d-0.35)*1.6); });
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

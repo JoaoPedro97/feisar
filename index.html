@@ -1,0 +1,915 @@
+<title>FEISAR by Project MIMICO</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+/* Layout concept: a dark engineering showcase. The arm itself, as a live 3D model, opens the page;
+   below it, drawing-sheet structure (spec strip, revision table, title block) carries the content.
+   Single deliberate dark theme: near-black blue graphite, PLA orange as the only accent, steel blue for data. */
+:root{
+  --bg:#0a0d12; --bg-2:#10141c; --bg-3:#171d28; --bg-4:#1f2733;
+  --fg:#eceae3; --fg-2:#9ba3b0; --fg-3:#5f6876; --line:#232b38; --line-2:#334052;
+  --accent:#ff6a1a; --accent-2:#ffa468; --accent-ink:#0a0d12; --accent-soft:rgba(255,106,26,.14);
+  --steel:#78aee6; --ok:#5fc48a; --warn:#f0b43c;
+  --display:"Barlow Condensed","Arial Narrow",Impact,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",Consolas,"Courier New",monospace;
+  --ease:cubic-bezier(.2,.7,.2,1);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--bg)}
+img,video{max-width:100%;display:block}
+a{color:inherit}
+h1,h2,h3{font-family:var(--display);font-weight:700;line-height:.95;margin:0;text-wrap:balance;letter-spacing:.005em}
+h2{font-size:clamp(42px,6.2vw,80px);text-transform:uppercase}
+h3{font-size:clamp(24px,3vw,32px);font-weight:600}
+p{margin:0}
+.gutter{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1240px;margin-inline:auto}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-2)}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:clamp(17px,1.5vw,20px);max-width:38em}
+.muted{color:var(--fg-2)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:rgba(10,13,18,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:14px}
+.brand{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none}
+.brand span{color:var(--accent)}
+.nav{display:flex;gap:22px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.nav a{text-decoration:none;color:var(--fg-2);transition:color .2s}
+.nav a:hover,.nav a:focus-visible{color:var(--accent)}
+
+/* hero with 3D */
+.hero{position:relative;min-height:clamp(600px,84vh,940px);display:grid;align-items:end;overflow:hidden;
+  background:radial-gradient(1100px 700px at 68% 42%, #1a2231 0%, #0e131b 45%, var(--bg) 80%)}
+.hero-3d{position:absolute;inset:0;z-index:0}
+.hero-3d canvas{display:block;width:100%;height:100%;touch-action:pan-y;cursor:grab}
+.hero-3d canvas.dragging{cursor:grabbing}
+.hero-3d::after{content:"";position:absolute;inset:auto 0 0 0;height:46%;background:linear-gradient(180deg,rgba(10,13,18,0) 0%,rgba(10,13,18,.85) 70%,var(--bg) 100%);pointer-events:none}
+.hero-load{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-3);pointer-events:none;transition:opacity .4s}
+.hero-load.off{opacity:0;visibility:hidden}
+.hero-copy{position:relative;z-index:2;display:grid;gap:20px;padding-block:40px 56px;max-width:720px;pointer-events:none}
+.hero-copy a,.hero-copy button{pointer-events:auto}
+.hero h1{font-size:clamp(88px,15vw,220px);text-transform:uppercase;line-height:.8;letter-spacing:-.01em;
+  background:linear-gradient(180deg,#fff 0%,#dcd8cf 60%,#9ea6b3 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero h1 small{display:block;font-size:.26em;font-weight:500;letter-spacing:.04em;color:var(--fg-2);-webkit-text-fill-color:var(--fg-2);margin-top:16px;line-height:1.1}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.btn{font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;padding:12px 18px;border:1px solid var(--line-2);color:var(--fg);background:rgba(16,20,28,.6);cursor:pointer;transition:border-color .2s,transform .2s,background .2s}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:500}
+.btn:hover,.btn:focus-visible{border-color:var(--accent);transform:translateY(-1px)}
+.hint{position:absolute;z-index:2;right:0;bottom:0;padding:0 0 18px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg-3);pointer-events:none}
+
+/* joint panel */
+.jointpanel{position:absolute;z-index:3;right:0;top:50%;transform:translateY(-50%);width:300px;background:rgba(16,20,28,.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line-2);padding:16px;display:grid;gap:12px}
+.jointpanel .ttl{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-2)}
+.jointpanel .ttl b{color:var(--accent);font-weight:500}
+.joint{display:grid;grid-template-columns:34px 1fr 64px;align-items:center;gap:10px;font-family:var(--mono);font-size:12px}
+.joint label{color:var(--fg-2)}
+.joint output{text-align:right;font-variant-numeric:tabular-nums;color:var(--fg)}
+.joint input[type=range]{width:100%;margin:0;accent-color:var(--accent);height:22px}
+.jointpanel .row{display:flex;gap:8px;flex-wrap:wrap}
+.jointpanel .btn{padding:8px 12px;font-size:11px;flex:1;text-align:center}
+.readout{display:grid;grid-template-columns:1fr 1fr;gap:8px;border-top:1px solid var(--line);padding-top:10px;font-family:var(--mono);font-size:11px;color:var(--fg-2)}
+.readout b{display:block;font-family:var(--display);font-size:24px;font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums;line-height:1}
+.readout b i{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--fg-2);margin-left:4px}
+
+/* spec strip */
+.specs{display:grid;grid-template-columns:repeat(6,1fr);border-block:1px solid var(--line);margin:0}
+.specs > div{padding:20px 16px 18px 0;border-right:1px solid var(--line);min-width:0}
+.specs > div:last-child{border-right:0}
+.specs > div + div{padding-left:16px}
+.specs dt{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg-2);margin-bottom:6px}
+.specs dd{margin:0;font-family:var(--display);font-size:32px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.specs dd small{display:block;font-family:var(--body);font-size:13px;font-weight:400;color:var(--fg-2);margin-top:6px;line-height:1.3}
+
+/* sections */
+section{padding-block:88px 0}
+.sec-head{display:grid;grid-template-columns:1fr 1.2fr;gap:24px 48px;align-items:end;margin-bottom:40px}
+.sec-head .eyebrow{margin-bottom:12px}
+.sec-head p{max-width:40em}
+
+/* reveal */
+.reveal{opacity:.35;transform:translateY(22px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.reveal.in{opacity:1;transform:none}
+.reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}.reveal.d3{transition-delay:.24s}
+
+/* revisions */
+.revs{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.rev{background:var(--bg-2);padding:16px;display:grid;gap:14px;min-width:0;align-content:start;transition:background .3s}
+.rev:hover{background:var(--bg-3)}
+.rev .ph{overflow:hidden;aspect-ratio:1/1}
+.rev img{aspect-ratio:1/1;width:100%;height:auto;object-fit:cover;filter:saturate(.9);transition:transform .8s var(--ease)}
+.rev:hover img{transform:scale(1.05)}
+.rev .tag{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-2)}
+.rev .tag b{color:var(--accent);font-weight:500}
+.rev h3{font-size:26px}
+.rev p{font-size:14px;color:var(--fg-2)}
+.rev .fact{font-family:var(--mono);font-size:12px;color:var(--fg);border-top:1px solid var(--line);padding-top:10px}
+
+/* motion */
+.motion{display:grid;grid-template-columns:.62fr 1fr;gap:24px;align-items:stretch}
+.vid{position:relative;background:var(--bg-2);border:1px solid var(--line);overflow:hidden;min-width:0}
+.vid video{width:100%;height:100%;object-fit:cover}
+.vid .cap{position:absolute;left:0;bottom:0;right:0;padding:14px 16px;background:linear-gradient(0deg,rgba(10,13,18,.9),rgba(10,13,18,0));font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-2)}
+.vid .cap b{color:var(--fg);font-weight:500;display:block;margin-bottom:2px;letter-spacing:.06em}
+.vid.tall{aspect-ratio:9/16;max-height:720px}
+.motion-side{display:grid;gap:24px}
+.motion-side .vid{aspect-ratio:16/9}
+
+/* work */
+.work{display:grid;gap:64px}
+.piece{display:grid;grid-template-columns:1.1fr .9fr;gap:28px 56px;align-items:center}
+.piece:nth-child(even) .piece-img{order:2}
+.piece-img{min-width:0;overflow:hidden;border:1px solid var(--line)}
+.piece-img img{width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;transition:transform .9s var(--ease)}
+.piece:hover .piece-img img{transform:scale(1.03)}
+.piece-img.small img{aspect-ratio:1/1;max-width:440px;margin-inline:auto}
+.piece-text{display:grid;gap:14px;min-width:0}
+.piece-text ul{margin:0;padding-left:1.1em;color:var(--fg-2);font-size:15px;display:grid;gap:6px}
+.piece-text ul li::marker{color:var(--accent)}
+.status{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--line-2);width:max-content;max-width:100%}
+.status::before{content:"";width:8px;height:8px;background:var(--accent);border-radius:50%}
+.status.sim::before{background:transparent;border:2px solid var(--accent)}
+.status.closed::before{background:var(--fg-2)}
+
+/* analyses */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:28px}
+.stat{background:var(--bg-2);padding:18px 18px 16px;min-width:0}
+.stat b{display:block;font-family:var(--display);font-size:clamp(36px,4vw,56px);font-weight:700;line-height:1;color:var(--fg);font-variant-numeric:tabular-nums}
+.stat b i{font-style:normal;font-size:.5em;color:var(--steel);margin-left:4px;font-weight:600}
+.stat span{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-2);margin-top:8px}
+.tabs{display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:28px}
+.tab{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:none;border:0;border-bottom:2px solid transparent;color:var(--fg-2);padding:12px 16px;cursor:pointer;margin-bottom:-1px;transition:color .2s,border-color .2s}
+.tab:hover{color:var(--fg)}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.panel{display:grid;grid-template-columns:1.25fr .75fr;gap:28px 40px;align-items:start}
+.panel .gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;min-width:0}
+.panel .gallery figure{margin:0;background:var(--bg-2);border:1px solid var(--line);overflow:hidden;cursor:zoom-in;min-width:0;transition:border-color .2s}
+.panel .gallery figure:hover{border-color:var(--line-2)}
+.panel .gallery figure.span2{grid-column:span 2}
+.panel .gallery img{width:100%;height:auto;aspect-ratio:4/3;object-fit:contain;object-position:center;background:var(--bg-2);transition:transform .7s var(--ease)}
+.panel .gallery figure.span2 img{aspect-ratio:2/1}
+.panel .gallery figure:hover img{transform:scale(1.02)}
+.panel .gallery figcaption{padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--fg-2);letter-spacing:.04em;border-top:1px solid var(--line)}
+.panel .text{display:grid;gap:14px;min-width:0}
+.panel .text h3{font-size:30px}
+.panel .text p{color:var(--fg-2);font-size:15px}
+.kv{display:grid;gap:0;border-top:1px solid var(--line);font-family:var(--mono);font-size:12px}
+.kv div{display:grid;grid-template-columns:1fr auto;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);min-width:0}
+.kv div span:first-child{color:var(--fg-2)}
+.kv div span:last-child{color:var(--fg);text-align:right;font-variant-numeric:tabular-nums}
+.kv div span:last-child.hot{color:var(--accent)}
+.kv div span:last-child.cool{color:var(--steel)}
+
+/* method */
+.method{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);counter-reset:step}
+.step{background:var(--bg-2);padding:20px 18px 22px;min-width:0;display:grid;gap:10px;align-content:start;transition:background .3s}
+.step:hover{background:var(--bg-3)}
+.step::before{counter-increment:step;content:"0" counter(step);font-family:var(--display);font-size:44px;font-weight:700;color:var(--accent);line-height:1}
+.step h3{font-size:22px}
+.step p{font-size:14px;color:var(--fg-2)}
+.quote{margin:44px 0 0;padding:28px 0 0;border-top:1px solid var(--line);font-family:var(--display);font-size:clamp(30px,4.2vw,50px);font-weight:500;line-height:1.08;max-width:22em;text-wrap:balance}
+.quote span{color:var(--accent)}
+
+/* failures */
+.notes{display:grid;grid-template-columns:repeat(3,1fr);gap:24px 32px}
+.note{display:grid;gap:8px;padding-top:14px;border-top:2px solid var(--accent);min-width:0}
+.note h3{font-size:22px}
+.note p{font-size:14px;color:var(--fg-2)}
+.note .mono{font-size:12px;color:var(--fg)}
+
+/* bom */
+.bom{display:grid;grid-template-columns:repeat(2,1fr);gap:0 48px;font-family:var(--mono);font-size:13px}
+.bom div{display:grid;grid-template-columns:120px 1fr;gap:16px;padding:10px 0;border-bottom:1px solid var(--line);min-width:0}
+.bom span:first-child{color:var(--fg-2);letter-spacing:.08em;text-transform:uppercase;font-size:11px;padding-top:2px}
+
+/* about + title block */
+.about{display:grid;grid-template-columns:1fr 1fr;gap:24px 48px;align-items:start}
+.links{display:grid;gap:10px;font-family:var(--mono);font-size:14px}
+.links a{text-decoration:none;display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);transition:color .2s}
+.links a span:last-child{color:var(--accent)}
+.links a:hover span:first-child,.links a:focus-visible span:first-child{color:var(--accent)}
+.titleblock{margin-top:80px;margin-bottom:48px;border:1px solid var(--fg-2);display:grid;grid-template-columns:2fr 1.2fr 1fr 1fr;font-family:var(--mono);font-size:12px}
+.titleblock div{padding:10px 12px;border-right:1px solid var(--fg-2);border-bottom:1px solid var(--fg-2);min-width:0}
+.titleblock div:nth-child(4n){border-right:0}
+.titleblock div:nth-last-child(-n+4){border-bottom:0}
+.titleblock .k{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-2);margin-bottom:3px}
+.titleblock .big{font-family:var(--display);font-size:28px;font-weight:700;letter-spacing:.04em}
+
+/* lightbox */
+.lb{position:fixed;inset:0;z-index:50;background:rgba(6,8,12,.92);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-left,0px));padding-top:max(16px,env(safe-area-inset-top,0px))}
+.lb img{max-width:min(1400px,100%);max-height:84vh;width:auto;height:auto;border:1px solid var(--line-2);background:var(--bg-2)}
+.lb figcaption{margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--fg-2);text-align:center;max-width:70ch}
+.lb figure{margin:0;display:grid;justify-items:center}
+.lb .x{position:absolute;top:max(14px,env(safe-area-inset-top,0px));right:max(14px,env(safe-area-inset-right,0px));background:var(--bg-2);border:1px solid var(--line-2);color:var(--fg);font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:10px 14px;cursor:pointer}
+
+/* motion prefs */
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  html{scroll-behavior:auto}
+  .rev img,.piece-img img,.panel .gallery img{transition:none}
+}
+
+/* responsive */
+@media (max-width:1100px){
+  .jointpanel{width:270px}
+}
+@media (max-width:980px){
+  .specs{grid-template-columns:repeat(3,1fr)}
+  .specs > div:nth-child(3){border-right:0}
+  .specs > div:nth-child(4){padding-left:0;border-top:1px solid var(--line)}
+  .specs > div:nth-child(n+5){border-top:1px solid var(--line)}
+  .revs{grid-template-columns:repeat(2,1fr)}
+  .method{grid-template-columns:repeat(2,1fr)}
+  .notes{grid-template-columns:1fr 1fr}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .panel{grid-template-columns:1fr}
+  .motion{grid-template-columns:1fr 1fr}
+  .vid.tall{max-height:none}
+}
+@media (max-width:900px){
+  .hero{min-height:0;grid-template-rows:auto auto}
+  .hero-3d{position:relative;height:62vh;min-height:420px;grid-row:1}
+  .hero-3d::after{height:30%}
+  .hero-copy{grid-row:2;padding-block:8px 24px}
+  .hint{position:static;padding:0 0 14px}
+  .jointpanel{position:static;transform:none;width:auto;grid-row:3;margin-bottom:28px}
+}
+@media (max-width:760px){
+  .sec-head,.piece,.about,.bom{grid-template-columns:1fr}
+  .piece:nth-child(even) .piece-img{order:0}
+  .notes{grid-template-columns:1fr}
+  .motion{grid-template-columns:1fr}
+  .titleblock{grid-template-columns:1fr 1fr}
+  .titleblock div:nth-child(4n){border-right:1px solid var(--fg-2)}
+  .titleblock div:nth-child(2n){border-right:0}
+  .titleblock div:nth-last-child(-n+4){border-bottom:1px solid var(--fg-2)}
+  .titleblock div:nth-last-child(-n+2){border-bottom:0}
+  .nav{display:none}
+  section{padding-block:64px 0}
+}
+@media (max-width:460px){
+  .specs{grid-template-columns:1fr 1fr}
+  .specs > div{padding-left:0 !important;border-right:0;border-top:1px solid var(--line)}
+  .specs > div:nth-child(-n+2){border-top:0}
+  .specs > div:nth-child(odd){border-right:1px solid var(--line)}
+  .specs > div:nth-child(even){padding-left:16px !important}
+  .revs,.method,.stats{grid-template-columns:1fr}
+  .bom div{grid-template-columns:1fr}
+  .panel .gallery{grid-template-columns:1fr}
+  .panel .gallery figure.span2{grid-column:auto}
+  .panel .gallery figure.span2 img{aspect-ratio:4/3}
+}
+</style>
+
+<header class="top">
+  <div class="wrap gutter">
+    <a class="brand" href="#top">Project <span>MIMICO</span></a>
+    <nav class="nav" aria-label="Sections">
+      <a href="exploded.html">Exploded 3D</a>
+      <a href="#revisions">Revisions</a>
+      <a href="#motion">Motion</a>
+      <a href="#work">Work</a>
+      <a href="#analysis">Analysis</a>
+      <a href="#method">Method</a>
+      <a href="#about">About</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero" id="top" style="padding-top:0">
+  <div class="hero-3d" id="stage">
+    <canvas id="c3d" aria-label="Interactive 3D model of the FEISAR arm. Drag to orbit." role="img"></canvas>
+    <div class="hero-load" id="loadmsg">Loading model</div>
+  </div>
+  <div class="wrap gutter" style="position:relative;z-index:2;width:100%">
+    <div class="hero-copy">
+      <p class="eyebrow"><b>Engineering log</b> &nbsp;·&nbsp; Porto Alegre, Brazil &nbsp;·&nbsp; 2020 to now</p>
+      <h1>Feisar<small>A robot arm built from the gear math up</small></h1>
+      <p class="lede">A four-axis arm, 3D printed at home, on planetary reducers I designed and printed myself. The model above is the real CAD of the 2025 arm, moving within the joint limits the collision sweep found.</p>
+      <div class="cta">
+        <a class="btn primary" href="exploded.html">Take it apart in 3D</a>
+        <a class="btn" href="#analysis">See the analysis</a>
+        <a class="btn" href="https://www.instagram.com/projectmimico/">@projectmimico</a>
+      </div>
+    </div>
+    <p class="hint">Drag to orbit · pinch or buttons to zoom</p>
+    <div class="jointpanel" id="jointpanel" aria-label="Joint control">
+      <div class="ttl"><span>Joints · version A</span><b id="mode">demo</b></div>
+      <div class="joint"><label for="j1">J1</label><input type="range" id="j1" min="-170" max="170" value="0" step="1"><output for="j1" id="o1">0°</output></div>
+      <div class="joint"><label for="j2">J2</label><input type="range" id="j2" min="-95" max="95" value="0" step="1"><output for="j2" id="o2">0°</output></div>
+      <div class="joint"><label for="j3">J3</label><input type="range" id="j3" min="-180" max="180" value="0" step="1"><output for="j3" id="o3">0°</output></div>
+      <div class="joint"><label for="j4">J4</label><input type="range" id="j4" min="-137" max="137" value="0" step="1"><output for="j4" id="o4">0°</output></div>
+      <div class="row">
+        <button class="btn" id="btnDemo" type="button">Demo</button>
+        <button class="btn" id="btnHome" type="button">Home</button>
+        <button class="btn" id="btnZin" type="button" aria-label="Zoom in">+</button>
+        <button class="btn" id="btnZout" type="button" aria-label="Zoom out">−</button>
+      </div>
+      <div class="readout">
+        <div>Tip radius<b><span id="rdR">0</span><i>mm</i></b></div>
+        <div>Tip height<b><span id="rdH">0</span><i>mm</i></b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap gutter">
+  <dl class="specs">
+    <div><dt>Axes</dt><dd>4<small>base, shoulder, roll, elbow</small></dd></div>
+    <div><dt>Reach</dt><dd>681 mm<small>914 mm high at the flange</small></dd></div>
+    <div><dt>Reduction</dt><dd>1:49<small>two printed 1:7 stages</small></dd></div>
+    <div><dt>Motors</dt><dd>3 + 1<small>NEMA 17 and one NEMA 23</small></dd></div>
+    <div><dt>Control</dt><dd>ESP32<small>TB6600 / DM556, open loop</small></dd></div>
+    <div><dt>Build</dt><dd>5 wk<small>July 2025, one printer, ABS</small></dd></div>
+  </dl>
+
+  <section id="revisions">
+    <div class="sec-head reveal">
+      <div>
+        <p class="eyebrow">Revision history</p>
+        <h2>Six years of printed gearboxes</h2>
+      </div>
+      <p class="muted">Most printed arms buy the gearbox and add a belt. I wanted to know where the torque goes, so from the first prototype the reducer has been the project. Each revision is one tolerance lesson.</p>
+    </div>
+    <div class="revs">
+      <article class="rev reveal">
+        <div class="ph"><img src="img/mk1-2020.jpg" alt="MK1 planetary from 2020: white 125-tooth ring with three black planets" loading="lazy"></div>
+        <div class="tag"><b>Rev A</b><span>Sep 2020</span></div>
+        <h3>MK1</h3>
+        <p>First planetaries on an ANET A8. One part, one whole night on the printer.</p>
+        <p class="fact">125-tooth ring · 50-tooth planets · 1:6</p>
+      </article>
+      <article class="rev reveal d1">
+        <div class="ph"><img src="img/rpv1-hand.jpg" alt="Orange RPV1 planetary stage held in one hand" loading="lazy"></div>
+        <div class="tag"><b>Rev B</b><span>Jan 2024</span></div>
+        <h3>RPV1</h3>
+        <p>Smaller, tighter, modular. Validated with a lever test on 15 Jan 2024. Two of them became the arm's base and shoulder.</p>
+        <p class="fact">1:7 per stage · stacked to 1:49</p>
+      </article>
+      <article class="rev reveal d2">
+        <div class="ph"><img src="img/arm-2025.jpg" alt="FEISAR arm fully assembled on the desk, August 2025" loading="lazy"></div>
+        <div class="tag"><b>Rev C</b><span>Jul 2025</span></div>
+        <h3>FEISAR arm</h3>
+        <p>Four axes in five weeks. It moves, and it shows exactly where ABS and open loop give up.</p>
+        <p class="fact">4 axes · 681 mm · 147 N·m at the shoulder, on paper</p>
+      </article>
+      <article class="rev reveal d3">
+        <div class="ph"><img src="an/base-full.jpg" alt="Render of the RPV1-B base: pale blue housing on a black motor foot" loading="lazy"></div>
+        <div class="tag"><b>Rev D</b><span>Oct 2026</span></div>
+        <h3>RPV1-B</h3>
+        <p>Base redesigned from the tooth profile up, with the output measured instead of assumed. Not printed yet.</p>
+        <p class="fact">m 1.5 · 14/31/76 · 1:41.3 · simulated</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="motion">
+    <div class="sec-head reveal">
+      <div>
+        <p class="eyebrow">Motion</p>
+        <h2>Bench and simulation</h2>
+      </div>
+      <p class="muted">Left, the arm as filmed at home with the stepper sound left in. Right, the same arm driven in Python from the exported CAD: each joint alone to its software limit, then a pick-and-place over the new pedestal.</p>
+    </div>
+    <div class="motion">
+      <div class="vid tall reveal">
+        <video muted loop playsinline preload="metadata" data-autoplay src="video/reel-motion.mp4" poster="img/hero.jpg"></video>
+        <div class="cap"><b>Real · 2025 arm</b>open loop, NEMA 17 + NEMA 23, filmed at home</div>
+      </div>
+      <div class="motion-side">
+        <div class="vid reveal d1">
+          <video muted loop playsinline preload="metadata" data-autoplay src="video/sim-joints.mp4"></video>
+          <div class="cap"><b>Simulation · version A on the new pedestal</b>J1, J2, J4, J3 to their limits, then pick and place · 24.7 s</div>
+        </div>
+        <div class="vid reveal d2">
+          <video muted loop playsinline preload="metadata" data-autoplay src="video/sim-base.mp4"></video>
+          <div class="cap"><b>Simulation · RPV1-B base in section</b>motor 720°, output 17.4°, encoder pinion −151° · 1:41.33</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="work">
+    <div class="sec-head reveal">
+      <div>
+        <p class="eyebrow">Selected work</p>
+        <h2>What is on the bench</h2>
+      </div>
+      <p class="muted">Everything measured is marked as measured. Everything simulated is marked as simulated. The cycloidal actuator that comes next stays off this page.</p>
+    </div>
+    <div class="work">
+
+      <article class="piece reveal">
+        <div class="piece-img"><img src="img/inside-49.jpg" alt="Open RPV1 stage: black carrier with three planets inside an orange ring gear" loading="lazy"></div>
+        <div class="piece-text">
+          <span class="status">Built · on the arm</span>
+          <h3>Inside a printed 1:49</h3>
+          <p class="muted">A 72-tooth ring, a 12-tooth sun and three planets give 1:7. Stack a second stage and one NEMA 23 turns into slow torque at the shoulder.</p>
+          <ul>
+            <li>Core, housing and input/output are separate parts, so the motor swaps without redesigning the gears.</li>
+            <li>Overloaded to 6 kg on the lever, the motor shaft slipped before a single tooth broke.</li>
+            <li>ABS decides the real number; the 147 N·m is the motor times the ratio.</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="piece reveal">
+        <div class="piece-img"><img src="img/held-6kg.jpg" alt="Orange and black RPV1 reducer parts laid out on a desk next to the arm" loading="lazy"></div>
+        <div class="piece-text">
+          <span class="status">Built · July 2025</span>
+          <h3>The 2025 arm</h3>
+          <p class="muted">Base, shoulder, upper-arm roll and elbow, all through printed planetaries. Three NEMA 17 and one NEMA 23, TB6600 drivers, an ESP32 with a web panel and a joystick.</p>
+          <ul>
+            <li>Two configurations: A with an extension link in the upper arm, B with a short link.</li>
+            <li>681 mm horizontal and 914 mm high at the wrist flange in the long configuration, from the CAD.</li>
+            <li>No wrist yet. Open loop. Lifted its own weight.</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="piece reveal">
+        <div class="piece-img"><img src="an/base-inside.jpg" alt="Render of the RPV1-B base with the housing cut away, showing the planet carrier" loading="lazy"></div>
+        <div class="piece-text">
+          <span class="status sim">Design · simulated, untested</span>
+          <h3>RPV1-B: the base, done properly</h3>
+          <p class="muted">The old base had about 0.7 degrees of backlash and a second-stage sun running at six times the stress the material tolerates. The new one is generated by rolling a planet-shaped cutter, the way a gear generator does it, so the profiles are conjugate and backlash is a single parameter tuned with printed coupons.</p>
+          <ul>
+            <li>Module 1.5, helix 15 degrees, two identical 14/31/76 stages, steel pins on 6000 bearings, output on two 6010 bearings.</li>
+            <li>Tooth root stress at stalled motor: about 24 MPa by hand, 38 MPa in the finite-element model. The motor skips before the tooth fails.</li>
+            <li>Simulated output backlash about 0.2 degrees. Printed volume about 1.3 litres.</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="piece reveal">
+        <div class="piece-img"><img src="an/sensor-bay.jpg" alt="Render of the sensor bay: encoder ring on the output flange and the small pinion" loading="lazy"></div>
+        <div class="piece-text">
+          <span class="status sim">Design · firmware tested in simulation</span>
+          <h3>Reading the output without touching the shaft</h3>
+          <p class="muted">The centre of the axis is taken by the motor and the suns, so the output angle comes from a 104-tooth ring on the flange driving a 12-tooth pinion on a 14-bit magnetic encoder: about 142,000 counts per turn of the arm.</p>
+          <ul>
+            <li>A Hall switch and a 3 mm magnet give the absolute reference at power-up; a DS18B20 on the motor protects the printed flange.</li>
+            <li>5,000 Monte Carlo assemblies found the encoder pair would bind in 44 percent of builds. Moving the pinion 0.15 mm and tightening the flange fit brought that under 0.1 percent.</li>
+            <li>ESP32 firmware: homing, closed-loop positioning, backlash measurement, thermal cut-off. Not yet run on hardware.</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="piece reveal">
+        <div class="piece-img small"><img src="img/rcv1.jpg" alt="RCV1 cycloidal reducer housing, dark, seen from the output side" loading="lazy"></div>
+        <div class="piece-text">
+          <span class="status closed">Next chapter · closed</span>
+          <h3>MIMICO</h3>
+          <p class="muted">The cycloidal actuator the planetaries were leading to. No internal teeth, designed to be cut in metal, on the bench now. Concept and results will show up here; the profile, the spreadsheet and the dimensions will not.</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section id="analysis">
+    <div class="sec-head reveal">
+      <div>
+        <p class="eyebrow">Engineering analysis · October 2026</p>
+        <h2>What the scripts found</h2>
+      </div>
+      <p class="muted">Every number here came out of a script run against the CAD, before any part was printed. They are predictions with a pass criterion attached; the bench plan replaces them one by one.</p>
+    </div>
+    <div class="stats reveal">
+      <div class="stat"><b data-count="20736">0</b><span>poses checked per version · 5° grid</span></div>
+      <div class="stat"><b data-count="5000">0</b><span>Monte Carlo assemblies · sensor bay</span></div>
+      <div class="stat"><b data-count="751">0<i>k</i></b><span>nodes in the largest FE model</span></div>
+      <div class="stat"><b data-count="142">0<i>k</i></b><span>encoder counts per output turn</span></div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Analyses">
+      <button class="tab" role="tab" aria-selected="true" aria-controls="p-fea" id="t-fea" type="button">Finite elements</button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="p-kin" id="t-kin" type="button">Kinematics</button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="p-sen" id="t-sen" type="button">Sensors · Monte Carlo</button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="p-gear" id="t-gear" type="button">Gear generator</button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="p-ped" id="t-ped" type="button">Pedestal</button>
+    </div>
+
+    <div class="panel" id="p-fea" role="tabpanel" aria-labelledby="t-fea">
+      <div class="gallery">
+        <figure class="span2" data-cap="Second-stage sun, motor stalled: principal tension S1 at the tooth root, 38 MPa. Inventor Nastran, 322k nodes, 0.22 mm elements on the loaded tooth."><img src="an/fea-sun.jpg" alt="Finite-element stress map of the second-stage sun gear, with the loaded tooth in red" loading="lazy"><figcaption>Sun 2 · tooth root · S1</figcaption></figure>
+        <figure data-cap="D-bore of the first-stage sun under 0.65 N·m: the corner between the flat and the arc is the weakest point of the base. 52.6 MPa before the 0.4 mm fillet, 21 MPa after."><img src="an/fea-dbore.jpg" alt="Finite-element stress map of the D-shaped motor bore" loading="lazy"><figcaption>D-bore · S1</figcaption></figure>
+        <figure data-cap="Planet carrier, von Mises. The first run gave a singular matrix: the relief windows had cut the pin bosses loose. Three 4 mm ribs per pin fixed it; 12.9 MPa in the ribs."><img src="an/fea-carrier.jpg" alt="Finite-element von Mises map of the planet carrier plate" loading="lazy"><figcaption>Carrier · von Mises</figcaption></figure>
+        <figure class="span2" data-cap="Safety factor per part and material (PLA, PLA-CF, ABS), operation and peak cases, from the analytical study that preceded the FEA."><img src="an/fs-chart.jpg" alt="Bar chart of safety factors for each part of the RPV1-B base in three materials" loading="lazy"><figcaption>Safety factors · analytical</figcaption></figure>
+      </div>
+      <div class="text">
+        <h3>Nastran from a Python script</h3>
+        <p>The Inventor simulation tools do not take loads and supports from a script reliably, so the Nastran input deck is written by hand: gmsh mesh, loads and supports set in Python, solved by the solver that ships with Inventor. The path was validated on a steel cantilever before touching a gear.</p>
+        <div class="kv">
+          <div><span>Cantilever check, deflection</span><span>−0.1905 mm · 0 % error</span></div>
+          <div><span>Sun 2 root, stalled motor</span><span class="hot">38 MPa (Lewis: 24)</span></div>
+          <div><span>D-bore corner, before / after fillet</span><span>52.6 → 21 MPa</span></div>
+          <div><span>Sun-to-neck junction, before / after</span><span>60.6 → 39.4 MPa</span></div>
+          <div><span>Carrier ribs, von Mises</span><span>12.9 MPa · FS 2.3</span></div>
+          <div><span>Safe operating setting</span><span class="cool">driver current 65 %</span></div>
+        </div>
+        <p>Conclusion: with the motor stalled at full current no printed material survives the sun root. The protection is the driver current, not the plastic. At 65 percent the output still gives about 15 N·m, three times what operation needs.</p>
+      </div>
+    </div>
+
+    <div class="panel" id="p-kin" role="tabpanel" aria-labelledby="t-kin" hidden>
+      <div class="gallery">
+        <figure class="span2" data-cap="Reach envelope of the wrist flange, vertical section, J1 free: version A (extension link, orange) against version B (short link, blue). 681 / 914 mm and 521 / 754 mm."><img src="an/envelope.jpg" alt="Scatter plot of reachable wrist positions for versions A and B" loading="lazy"><figcaption>Envelope · A vs B</figcaption></figure>
+        <figure class="span2" data-cap="Shoulder × elbow collision map for four roll angles. Green is free, red is link-on-link contact, yellow is the wrist below the table."><img src="an/collision.jpg" alt="Grid of collision maps, shoulder angle against elbow angle" loading="lazy"><figcaption>Collision map · J2 × J4</figcaption></figure>
+        <figure data-cap="Version A as remounted in CAD: extension link in the upper arm."><img src="an/arm-a-iso.jpg" alt="Isometric CAD view of arm version A" loading="lazy"><figcaption>Version A</figcaption></figure>
+        <figure data-cap="Version B: short upper arm, same forearm."><img src="an/arm-b-iso.jpg" alt="Isometric CAD view of arm version B" loading="lazy"><figcaption>Version B</figcaption></figure>
+      </div>
+      <div class="text">
+        <h3>Every pose, mesh against mesh</h3>
+        <p>The 79 part meshes and the four joint axes were exported from Inventor read-only. A Python chain rotates the five links and tests contact between links with python-fcl, plus a check for anything dropping below the table. The 3D model at the top of this page runs on the same exported data.</p>
+        <div class="kv">
+          <div><span>Grid, shoulder × elbow × roll</span><span>20,736 poses per version</span></div>
+          <div><span>Shoulder limit, A / B</span><span>±100° · −98 / +96°</span></div>
+          <div><span>Elbow limit</span><span>±142° (B: ±137° near 90° roll)</span></div>
+          <div><span>Software limits sent to the ESP32</span><span class="cool">J2 ±95° · J4 ±137°</span></div>
+          <div><span>Reach, A</span><span class="hot">681 mm · 914 mm high</span></div>
+          <div><span>On the new pedestal</span><span>1,005 mm high · 0 poses under the table</span></div>
+        </div>
+        <p>Within the software limits there is no link-on-link collision in any combination tested. The old base let 33 poses dip under the table; the pedestal removes all of them.</p>
+      </div>
+    </div>
+
+    <div class="panel" id="p-sen" role="tabpanel" aria-labelledby="t-sen" hidden>
+      <div class="gallery">
+        <figure class="span2" data-cap="5,000 Monte Carlo assemblies of the encoder pair: measurement error, minimum backlash, homing repeatability and motor heating."><img src="an/montecarlo.jpg" alt="Four histograms from the Monte Carlo study of the sensor bay" loading="lazy"><figcaption>Monte Carlo · 5,000 builds</figcaption></figure>
+        <figure class="span2" data-cap="Magnetic field at the Hall switch and at the encoder chip, and the encoder transmission error over one turn."><img src="an/sensors-sim.jpg" alt="Plots of magnetic field versus position and encoder error" loading="lazy"><figcaption>Field and transmission error</figcaption></figure>
+        <figure data-cap="104-tooth ring on the output flange meshing with the 12-tooth encoder pinion, module 1."><img src="an/encoder2d.jpg" alt="2D meshing check of the encoder ring and pinion" loading="lazy"><figcaption>Encoder pair · 104 : 12</figcaption></figure>
+        <figure data-cap="One frame of the sensor animation: output at 18°, magnet over the Hall switch, encoder count on screen."><img src="an/sensor-frame.jpg" alt="Render of the sensor bay with an overlay of encoder reading and Hall state" loading="lazy"><figcaption>Sensor bay · animation frame</figcaption></figure>
+      </div>
+      <div class="text">
+        <h3>Finding the binding before printing it</h3>
+        <p>The sensor bay was modelled with the real board dimensions, then every tolerance was drawn at random 5,000 times: gear backlash, flange pilot fit, ring eccentricity, magnet position. The first design bound the encoder pair in 44 percent of builds.</p>
+        <div class="kv">
+          <div><span>Binding, first design</span><span class="hot">44 % of builds</span></div>
+          <div><span>Binding, pinion +0.15 mm and tighter pilot</span><span class="cool">0.01 to 0.08 %</span></div>
+          <div><span>Measurement error, typical / p99</span><span>0.046° · 0.10°</span></div>
+          <div><span>Homing repeatability</span><span>σ 0.011°</span></div>
+          <div><span>Largest error source</span><span>ring eccentricity, 0.055° per 0.05 mm</span></div>
+          <div><span>Motor case at 65 % current</span><span>42 °C (PLA softens at 55)</span></div>
+        </div>
+        <p>Resolution is not the problem: 142,000 counts per turn. The error budget is dominated by how round the printed ring is, which is exactly what the first bench test measures.</p>
+      </div>
+    </div>
+
+    <div class="panel" id="p-gear" role="tabpanel" aria-labelledby="t-gear" hidden>
+      <div class="gallery">
+        <figure class="span2" data-cap="One RPV1-B stage in 2D: 14-tooth sun, three 31-tooth planets, 76-tooth ring, generated by rolling a planet-shaped cutter. Backlash is one parameter."><img src="an/gear2d.jpg" alt="2D plot of the planetary stage with a zoom on the sun-planet-ring meshing" loading="lazy"><figcaption>Stage · 14 / 31 / 76 · m 1.5</figcaption></figure>
+        <figure data-cap="First stage with the second-stage sun on its back, as printed in one piece."><img src="an/stage1.jpg" alt="Render of the first-stage carrier with the second-stage sun gear" loading="lazy"><figcaption>Stage 1 and sun 2</figcaption></figure>
+        <figure data-cap="Base, waist and shoulder together: the output flange carries the shoulder reducer."><img src="an/waist-3d.jpg" alt="Render of the base with the waist and shoulder assembly stacked on it" loading="lazy"><figcaption>Base + waist + shoulder</figcaption></figure>
+        <figure class="span2" data-cap="RPV1-B in section, 100° cut, with the moving parts cut every frame: motor turns 720°, output 17.4°, encoder pinion −151°."><img src="an/base-section.jpg" alt="Sectioned render of the RPV1-B base showing both stages and the output bearings" loading="lazy"><figcaption>Section · two stages · 2 × 6010 output</figcaption></figure>
+      </div>
+      <div class="text">
+        <h3>Profiles that mesh because they were cut</h3>
+        <p>The old gears came from a spreadsheet with a convention that added clearance to the ring pitch diameter: 0.7 degrees of play at the base. The generator now builds the sun and ring by rolling a planet-shaped cutter through them, so the profiles are conjugate by construction and the 14-tooth sun gets correct root relief.</p>
+        <div class="kv">
+          <div><span>Module · pressure angle · helix</span><span>1.5 · 20° · 15°</span></div>
+          <div><span>Teeth, sun / planet / ring</span><span>14 / 31 / 76</span></div>
+          <div><span>Ratio per stage · total</span><span>6.43 · 1:41.33</span></div>
+          <div><span>Face width</span><span>15 mm</span></div>
+          <div><span>Output backlash, simulated</span><span class="cool">0.2°</span></div>
+          <div><span>Printed volume, base</span><span>1,286 cm³</span></div>
+        </div>
+        <p>Python drives Inventor through COM: profiles as polylines, patterns by definition, assembly constraints rebuilt on every regeneration. Change one parameter and the base rebuilds.</p>
+      </div>
+    </div>
+
+    <div class="panel" id="p-ped" role="tabpanel" aria-labelledby="t-ped" hidden>
+      <div class="gallery">
+        <figure class="span2" data-cap="Pedestal: two 240 × 240 × 114 mm modules of plates and columns. Module R holds the motor, reducer and drivers; module E holds the supply, the ESP32 and the fan."><img src="an/pedestal.jpg" alt="Render of the two-module pedestal with the RPV1-B base on top" loading="lazy"><figcaption>Pedestal · modules R and E</figcaption></figure>
+        <figure class="span2" data-cap="Inside: TB6600 and DM556 drivers on an L bracket, 24 V supply, fan path."><img src="an/pedestal-inside.jpg" alt="Render of the pedestal with the panels removed showing drivers and supply" loading="lazy"><figcaption>Inside · drivers and supply</figcaption></figure>
+        <figure class="span2" data-cap="Reach envelope on the new pedestal: same horizontal reach, 91 mm more height, nothing under the table."><img src="an/ped-envelope.jpg" alt="Reach envelope plots for versions A and B on the pedestal" loading="lazy"><figcaption>Envelope on the pedestal</figcaption></figure>
+      </div>
+      <div class="text">
+        <h3>Prints flat, machines flat</h3>
+        <p>The old foot was a thin cross around the motor with one bearing taking the whole tipping moment. The pedestal is plates and columns: each part prints flat on a Bambu A1 without supports, and each maps to an aluminium plate or bar with the same holes when the project goes to metal.</p>
+        <div class="kv">
+          <div><span>Modules</span><span>2 × 240 × 240 × 114 mm</span></div>
+          <div><span>Print time · filament</span><span>≈ 65 h · 2.3 kg</span></div>
+          <div><span>Top plate tilt, arm stretched out</span><span class="cool">0.009°</span></div>
+          <div><span>Shoulder height over the table</span><span>324.5 mm</span></div>
+          <div><span>Max tip height, A / B</span><span>1,005 · 845 mm</span></div>
+          <div><span>Contact with module E, in limits</span><span>0.06 % of poses</span></div>
+        </div>
+        <p>The collision grid was rerun with J1 included, because the base stopped being symmetric: 124,416 poses per version, refined at 5° where the arm meets module E.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="method">
+    <div class="sec-head reveal">
+      <div>
+        <p class="eyebrow">Method</p>
+        <h2>Scripted against the CAD</h2>
+      </div>
+      <p class="muted">Every part of the 2026 rebuild is generated by Python driving Autodesk Inventor, so when a bench test changes a parameter the whole base regenerates. The order below is the order things actually happen in.</p>
+    </div>
+    <div class="method reveal">
+      <div class="step"><h3>Diagnose</h3><p>Measure the old part. Backlash, stress at stall, which bearing takes the tipping moment.</p></div>
+      <div class="step"><h3>Generate</h3><p>Involute profiles by rolling a cutter; the 2D meshing check before any 3D.</p></div>
+      <div class="step"><h3>Simulate</h3><p>Nastran from a hand-written deck, gmsh mesh, Monte Carlo on tolerances, magnetic field at the sensors.</p></div>
+      <div class="step"><h3>Print</h3><p>Flat on a Bambu A1, no supports. Each plate maps to an aluminium part with the same holes.</p></div>
+      <div class="step"><h3>Measure</h3><p>Eight bench phases with a pass criterion each. Results replace the simulated numbers as they come.</p></div>
+    </div>
+    <p class="quote reveal">Simulation is where I look. <span>The bench is where I believe.</span></p>
+  </section>
+
+  <section id="failures">
+    <div class="sec-head reveal">
+      <div>
+        <p class="eyebrow">Field notes</p>
+        <h2>What broke</h2>
+      </div>
+      <p class="muted">The 2026 rebuild starts from these. Each one has a number because each one was measured or computed after the fact.</p>
+    </div>
+    <div class="notes">
+      <div class="note reveal"><h3>Ring gear backlash</h3><p>A spreadsheet convention added clearance to the ring pitch diameter. The base had about 0.7 degrees of play, roughly 8 mm at the end of the long arm.</p><p class="mono">0.7° · 8 mm at the tip</p></div>
+      <div class="note reveal d1"><h3>Sun gear at stall</h3><p>Tooth root stress on the second-stage sun with the motor stalled came out around 152 MPa, for a material that tolerates about 25. The tooth would break before the motor skipped.</p><p class="mono">152 MPa vs 25 MPa allowed</p></div>
+      <div class="note reveal d2"><h3>One bearing, all the tipping</h3><p>A single 6816 held the whole arm against a 17.5 N·m tipping moment with the arm stretched out. Carriers cracked and delaminated around it.</p><p class="mono">17.5 N·m on one 6816</p></div>
+    </div>
+  </section>
+
+  <section id="components">
+    <div class="sec-head reveal">
+      <div>
+        <p class="eyebrow">Components</p>
+        <h2>Bill of materials</h2>
+      </div>
+    </div>
+    <div class="bom reveal">
+      <div><span>Motors</span><span>3 × NEMA 17 42HS60, 1 × NEMA 23 3 N·m</span></div>
+      <div><span>Drivers</span><span>TB6600 (NEMA 17), DM556 (NEMA 23)</span></div>
+      <div><span>Controller</span><span>ESP32 DevKit</span></div>
+      <div><span>Sensors</span><span>MT6701 magnetic encoder, A3144 Hall switch, DS18B20</span></div>
+      <div><span>Bearings</span><span>6000, 6203, 6010, 6816 (old base)</span></div>
+      <div><span>Printers</span><span>ANET A8 (2020), Bambu Lab A1 (2025 on)</span></div>
+      <div><span>Materials</span><span>ABS, PLA, PLA-CF, PETG</span></div>
+      <div><span>Tools</span><span>Autodesk Inventor + Nastran; Python (trimesh, gmsh, pyvista, PyAV); three.js on this page</span></div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="about reveal">
+      <div>
+        <p class="eyebrow" style="margin-bottom:12px">About</p>
+        <h2 style="margin-bottom:18px">João Pedro<br>Pinheiro Alves</h2>
+        <p class="lede">Mechanical and control engineering, done at a desk by a window in Porto Alegre. I build the reducer first and the robot around it. Open bench notes, dated, with the failures left in.</p>
+      </div>
+      <div class="links">
+        <a href="https://www.instagram.com/projectmimico/"><span>Instagram · engineering log</span><span>@projectmimico</span></a>
+        <a href="https://www.linkedin.com/in/joao-pedro-pinheiro-alves/"><span>LinkedIn</span><span>joao-pedro-pinheiro-alves</span></a>
+        <a href="#top"><span>Repository and project page</span><span>coming with the test log</span></a>
+      </div>
+    </div>
+
+    <footer class="titleblock" aria-label="Title block">
+      <div><span class="k">Project</span><span class="big">FEISAR</span></div>
+      <div><span class="k">Drawn by</span>João Pedro Pinheiro Alves</div>
+      <div><span class="k">Rev</span><span class="big">D</span></div>
+      <div><span class="k">Date</span>2026-10-27</div>
+      <div><span class="k">Title</span>Four-axis printed arm on custom planetary reducers</div>
+      <div><span class="k">Location</span>Porto Alegre, RS, Brazil</div>
+      <div><span class="k">Status</span>Rev D in design</div>
+      <div><span class="k">Sheet</span>1 of 1</div>
+    </footer>
+  </section>
+</div>
+
+<div class="lb" id="lb" hidden>
+  <button class="x" id="lbx" type="button">Close · Esc</button>
+  <figure><img id="lbimg" alt=""><figcaption id="lbcap"></figcaption></figure>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- reveal on scroll ---------- */
+  var revealEls = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window && !reduce) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, {rootMargin:'0px 0px -8% 0px', threshold:.08});
+    revealEls.forEach(function(el){ io.observe(el); });
+  } else { revealEls.forEach(function(el){ el.classList.add('in'); }); }
+
+  /* ---------- counters ---------- */
+  var counters = document.querySelectorAll('[data-count]');
+  function runCounter(el){
+    var target = parseInt(el.getAttribute('data-count'),10), suffix = el.querySelector('i');
+    var sfx = suffix ? suffix.outerHTML : '';
+    if (reduce) { el.innerHTML = target.toLocaleString('en-US') + sfx; return; }
+    var t0 = null, dur = 1400;
+    function frame(t){
+      if (!t0) t0 = t; var k = Math.min(1,(t-t0)/dur); k = 1 - Math.pow(1-k,3);
+      el.innerHTML = Math.round(target*k).toLocaleString('en-US') + sfx;
+      if (k < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+  if ('IntersectionObserver' in window) {
+    var io2 = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if (e.isIntersecting) { runCounter(e.target); io2.unobserve(e.target); } });
+    }, {threshold:.5});
+    counters.forEach(function(el){ io2.observe(el); });
+  } else { counters.forEach(runCounter); }
+
+  /* ---------- tabs ---------- */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      tabs.forEach(function(t){
+        var on = t === tab; t.setAttribute('aria-selected', on ? 'true' : 'false');
+        var p = document.getElementById(t.getAttribute('aria-controls')); if (p) p.hidden = !on;
+      });
+    });
+  });
+
+  /* ---------- lightbox ---------- */
+  var lb = document.getElementById('lb'), lbimg = document.getElementById('lbimg'), lbcap = document.getElementById('lbcap');
+  function openLb(fig){
+    var img = fig.querySelector('img'); lbimg.src = img.src; lbimg.alt = img.alt;
+    lbcap.textContent = fig.getAttribute('data-cap') || '';
+    lb.hidden = false; document.body.style.overflow = 'hidden'; document.getElementById('lbx').focus();
+  }
+  function closeLb(){ lb.hidden = true; document.body.style.overflow = ''; }
+  document.querySelectorAll('.gallery figure').forEach(function(fig){
+    fig.setAttribute('tabindex','0'); fig.setAttribute('role','button');
+    fig.addEventListener('click', function(){ openLb(fig); });
+    fig.addEventListener('keydown', function(e){ if (e.key==='Enter'||e.key===' ') { e.preventDefault(); openLb(fig); } });
+  });
+  lb.addEventListener('click', function(e){ if (e.target === lb || e.target === lbimg) closeLb(); });
+  document.getElementById('lbx').addEventListener('click', closeLb);
+  document.addEventListener('keydown', function(e){ if (e.key==='Escape' && !lb.hidden) closeLb(); });
+
+  /* ---------- videos play when visible ---------- */
+  var vids = document.querySelectorAll('video[data-autoplay]');
+  if ('IntersectionObserver' in window) {
+    var io3 = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        var v = e.target;
+        if (e.isIntersecting) { var p = v.play(); if (p && p.catch) p.catch(function(){}); } else { v.pause(); }
+      });
+    }, {threshold:.25});
+    vids.forEach(function(v){ io3.observe(v); });
+  }
+
+  /* ---------- 3D arm ---------- */
+  var canvas = document.getElementById('c3d'), stage = document.getElementById('stage'), loadmsg = document.getElementById('loadmsg');
+  if (!window.THREE || !canvas) { if (loadmsg) loadmsg.textContent = '3D unavailable'; return; }
+  var renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({canvas:canvas, antialias:true, alpha:true, powerPreference:'high-performance'});
+  } catch(err) { loadmsg.textContent = 'WebGL unavailable'; return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  renderer.setClearColor(0x000000, 0);
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x0a0d12, 2200, 4200);
+  var camera = new THREE.PerspectiveCamera(30, 1, 10, 9000);
+
+  var hemi = new THREE.HemisphereLight(0xdfe8f6, 0x0a0d12, .75); scene.add(hemi);
+  var key = new THREE.DirectionalLight(0xfff2e6, 1.15); key.position.set(700, 1300, 600); key.castShadow = true;
+  key.shadow.mapSize.set(2048,2048); key.shadow.camera.left=-900; key.shadow.camera.right=900; key.shadow.camera.top=1100; key.shadow.camera.bottom=-300; key.shadow.camera.near=200; key.shadow.camera.far=4000; key.shadow.bias=-0.0006;
+  scene.add(key);
+  var fill = new THREE.DirectionalLight(0x78aee6, .35); fill.position.set(-900, 500, -700); scene.add(fill);
+  var rim = new THREE.DirectionalLight(0xff6a1a, .45); rim.position.set(-300, 300, 1100); scene.add(rim);
+
+  var COLORS = {G0_base:0x2a3140, G1_ombro:0xff6a1a, G2_braco:0xe6e2d9, G3_cotovelo:0xcfcac0, G4_antebraco:0xe6e2d9};
+  var links = {}, axes = null, meta = null, tipLocal = null, floorY = 0, target = new THREE.Vector3(0,380,0);
+
+  /* camera orbit state */
+  var az = 0.62, el = 0.22, dist = 2250, azT = az, elT = el, distT = dist, dragging = false, lastX = 0, lastY = 0, lastInteract = -1e9, pinch0 = 0;
+  var minD = 900, maxD = 3600;
+  function clampEl(v){ return Math.max(-0.05, Math.min(1.25, v)); }
+  function setDist(v){ distT = Math.max(minD, Math.min(maxD, v)); }
+  function updateCamera(){
+    az += (azT-az)*0.12; el += (elT-el)*0.12; dist += (distT-dist)*0.12;
+    camera.position.set(target.x + dist*Math.sin(az)*Math.cos(el), target.y + dist*Math.sin(el), target.z + dist*Math.cos(az)*Math.cos(el));
+    camera.lookAt(target);
+  }
+  function onDown(x,y){ dragging = true; lastX=x; lastY=y; canvas.classList.add('dragging'); lastInteract = performance.now(); }
+  function onMove(x,y){ if(!dragging) return; azT -= (x-lastX)*0.006; elT = clampEl(elT + (y-lastY)*0.005); lastX=x; lastY=y; lastInteract = performance.now(); }
+  function onUp(){ dragging=false; canvas.classList.remove('dragging'); }
+  canvas.addEventListener('pointerdown', function(e){ if (e.pointerType==='touch') return; canvas.setPointerCapture(e.pointerId); onDown(e.clientX,e.clientY); });
+  canvas.addEventListener('pointermove', function(e){ if (e.pointerType==='touch') return; onMove(e.clientX,e.clientY); });
+  canvas.addEventListener('pointerup', onUp); canvas.addEventListener('pointercancel', onUp);
+  canvas.addEventListener('touchstart', function(e){
+    if (e.touches.length===1) onDown(e.touches[0].clientX, e.touches[0].clientY);
+    if (e.touches.length===2) { dragging=false; pinch0 = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY); }
+  }, {passive:true});
+  canvas.addEventListener('touchmove', function(e){
+    if (e.touches.length===1 && dragging) { var dx = e.touches[0].clientX-lastX; if (Math.abs(dx) > 2) { azT -= dx*0.007; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; lastInteract = performance.now(); } }
+    if (e.touches.length===2) { var d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY); if (pinch0) setDist(distT * pinch0/d); pinch0 = d; lastInteract = performance.now(); }
+  }, {passive:true});
+  canvas.addEventListener('touchend', function(){ dragging=false; pinch0=0; }, {passive:true});
+  canvas.addEventListener('wheel', function(e){ if (!(e.ctrlKey||e.metaKey)) return; e.preventDefault(); setDist(distT * (1 + Math.sign(e.deltaY)*0.12)); lastInteract = performance.now(); }, {passive:false});
+  document.getElementById('btnZin').addEventListener('click', function(){ setDist(distT*0.8); lastInteract = performance.now(); });
+  document.getElementById('btnZout').addEventListener('click', function(){ setDist(distT*1.25); lastInteract = performance.now(); });
+
+  /* joints */
+  var q = [0,0,0,0], qShow = [0,0,0,0];
+  var sliders = [1,2,3,4].map(function(i){ return document.getElementById('j'+i); });
+  var outs = [1,2,3,4].map(function(i){ return document.getElementById('o'+i); });
+  var modeEl = document.getElementById('mode'), rdR = document.getElementById('rdR'), rdH = document.getElementById('rdH');
+  var mode = reduce ? 'manual' : 'demo';
+  var DEMO = [[1.6,[0,0,0,0]],[2.4,[70,-45,0,75]],[1.8,[70,-62,0,112]],[2.6,[-55,-62,0,112]],[2.0,[-55,-25,90,45]],[2.4,[0,32,0,-80]],[1.8,[0,0,0,0]]];
+  var demoT = 0, demoTotal = DEMO.reduce(function(s,k){ return s+k[0]; },0);
+  function demoPose(t){
+    t = t % demoTotal; var prev = DEMO[DEMO.length-1][1], acc = 0;
+    for (var i=0;i<DEMO.length;i++){ var d = DEMO[i][0], nxt = DEMO[i][1];
+      if (t < acc + d) { var k = (t-acc)/d; k = 0.5-0.5*Math.cos(Math.PI*k); return [0,1,2,3].map(function(j){ return prev[j] + (nxt[j]-prev[j])*k; }); }
+      acc += d; prev = nxt; }
+    return prev;
+  }
+  function setMode(m){ mode = m; modeEl.textContent = m; }
+  sliders.forEach(function(s,i){ s.addEventListener('input', function(){ setMode('manual'); q[i] = parseFloat(s.value); }); });
+  document.getElementById('btnDemo').addEventListener('click', function(){ setMode(mode==='demo' ? 'manual' : 'demo'); });
+  document.getElementById('btnHome').addEventListener('click', function(){ setMode('manual'); q = [0,0,0,0]; });
+
+  function rotAbout(p, d, deg){
+    var m = new THREE.Matrix4().makeRotationAxis(d, deg*Math.PI/180);
+    var t1 = new THREE.Matrix4().makeTranslation(-p.x,-p.y,-p.z), t2 = new THREE.Matrix4().makeTranslation(p.x,p.y,p.z);
+    return t2.multiply(m).multiply(t1);
+  }
+  var tmpV = new THREE.Vector3();
+  function applyPose(qq){
+    if (!axes) return;
+    var acc = new THREE.Matrix4(), names = ['G1_ombro','G2_braco','G3_cotovelo','G4_antebraco'];
+    for (var i=0;i<4;i++){ acc.multiply(rotAbout(axes[i].p, axes[i].d, qq[i])); var L = links[names[i]]; if (L) { L.matrix.copy(acc); L.matrixWorldNeedsUpdate = true; } }
+    if (tipLocal) { tmpV.copy(tipLocal).applyMatrix4(acc); var r = Math.hypot(tmpV.x-axes[0].p.x, tmpV.z-axes[0].p.z); rdR.textContent = Math.round(r); rdH.textContent = Math.round(tmpV.y - floorY); }
+  }
+
+  /* model */
+  function buildModel(json){
+    meta = json;
+    var bin = atob(meta.data), buf = new ArrayBuffer(bin.length), u8 = new Uint8Array(buf);
+    for (var k=0;k<bin.length;k++) u8[k] = bin.charCodeAt(k);
+    var off = 0, c = meta.center, s = meta.scale; floorY = meta.floorY;
+    target.set(c[0], (meta.floorY + 839)/2 + 70, c[2]);
+    meta.links.forEach(function(L){
+      var nv = L.nv, nf = L.nf;
+      var qv = new Int16Array(buf.slice(off, off + nv*6)); off += nv*6;
+      var idx = new Uint32Array(buf.slice(off, off + nf*12)); off += nf*12;
+      var pos = new Float32Array(nv*3);
+      for (var i=0;i<nv*3;i+=3){ pos[i] = qv[i]/32767*s + c[0]; pos[i+1] = qv[i+1]/32767*s + c[1]; pos[i+2] = qv[i+2]/32767*s + c[2]; }
+      var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos,3)); g.setIndex(new THREE.BufferAttribute(idx,1)); g.computeVertexNormals();
+      var mat = new THREE.MeshStandardMaterial({color: COLORS[L.name] || 0xcccccc, flatShading:true, metalness: L.name==='G0_base' ? .35 : .08, roughness: L.name==='G1_ombro' ? .5 : .62});
+      var mesh = new THREE.Mesh(g, mat); mesh.matrixAutoUpdate = false; mesh.castShadow = true; mesh.receiveShadow = true;
+      links[L.name] = mesh; scene.add(mesh);
+    });
+    axes = ['J1','J2','J3','J4'].map(function(k){ var a = meta.axes[k]; return {p:new THREE.Vector3(a[0][0],a[0][1],a[0][2]), d:new THREE.Vector3(a[1][0],a[1][1],a[1][2]).normalize()}; });
+    tipLocal = new THREE.Vector3(meta.tip[0], meta.tip[1], meta.tip[2]);
+    /* floor: dark disc + grid, 100 mm pitch (the bench grid used in the kinematics videos) */
+    var floor = new THREE.Mesh(new THREE.CircleGeometry(1600, 72), new THREE.MeshStandardMaterial({color:0x0e121a, roughness:.95, metalness:0}));
+    floor.rotation.x = -Math.PI/2; floor.position.y = floorY - 1; floor.receiveShadow = true; scene.add(floor);
+    var grid = new THREE.GridHelper(2400, 24, 0x334052, 0x1c2430); grid.position.y = floorY + 0.5; grid.material.transparent = true; grid.material.opacity = .55; scene.add(grid);
+    var ring = new THREE.Mesh(new THREE.RingGeometry(676, 686, 128), new THREE.MeshBasicMaterial({color:0xff6a1a, transparent:true, opacity:.35, side:THREE.DoubleSide}));
+    ring.rotation.x = -Math.PI/2; ring.position.set(axes[0].p.x, floorY + 1, axes[0].p.z); scene.add(ring);
+    loadmsg.classList.add('off');
+    applyPose(q);
+  }
+  fetch('model/feisar_a.json').then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }).then(buildModel).catch(function(err){ loadmsg.textContent = 'Model could not load'; console.error(err); });
+
+  /* size + loop */
+  function resize(){
+    var w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
+    renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix();
+    camera.setViewOffset(w, h, (w > 900 ? -w*0.07 : 0), (w > 900 ? h*0.04 : 0), w, h);
+  }
+  window.addEventListener('resize', resize); resize();
+  var visible = true;
+  if ('IntersectionObserver' in window) { new IntersectionObserver(function(en){ visible = en[0].isIntersecting; }, {threshold:0}).observe(stage); }
+  var tPrev = performance.now();
+  function loop(t){
+    requestAnimationFrame(loop);
+    var dt = Math.min(0.05, (t - tPrev)/1000); tPrev = t;
+    if (!visible || document.hidden) return;
+    if (mode === 'demo') { demoT += dt; q = demoPose(demoT); sliders.forEach(function(s,i){ s.value = Math.round(q[i]); }); }
+    for (var i=0;i<4;i++){ qShow[i] += (q[i]-qShow[i]) * (mode==='demo' ? 1 : 0.18); outs[i].textContent = Math.round(qShow[i]) + '°'; }
+    applyPose(qShow);
+    if (!reduce && !dragging && (t - lastInteract) > 4000) azT += dt * 0.08;
+    updateCamera();
+    renderer.render(scene, camera);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
