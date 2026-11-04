@@ -135,6 +135,38 @@ section{padding-block:88px 0}
 .quote{margin:44px 0 0;padding:28px 0 0;border-top:1px solid var(--line);font-family:var(--display);font-size:clamp(30px,4.2vw,50px);font-weight:500;line-height:1.08;max-width:22em;text-wrap:balance}
 .quote span{color:var(--accent)}
 
+/* projects grid */
+.projs{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-top:56px}
+.proj{background:var(--bg-2);display:grid;align-content:start;min-width:0;transition:background .3s}
+.proj:hover{background:var(--bg-3)}
+.proj img{width:100%;aspect-ratio:4/3;object-fit:cover;border-bottom:1px solid var(--line)}
+.proj .body{padding:16px 18px 20px;display:grid;gap:10px}
+.proj h3{font-size:24px}
+.proj p{font-size:14px;color:var(--fg-2)}
+.proj .facts{margin:4px 0 0;padding:0;list-style:none;display:grid;gap:0;font-family:var(--mono);font-size:12px;color:var(--fg)}
+.proj .facts li{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding:7px 0;min-width:0}
+.proj .facts li span:first-child{color:var(--fg-2)}
+.proj .facts li span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+
+/* showcase of small parts */
+.vitrine{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.vitrine figure{margin:0;background:var(--bg-2);min-width:0}
+.vitrine img{width:100%;aspect-ratio:1/1;object-fit:cover}
+.vitrine figcaption{padding:8px 10px 10px;font-family:var(--mono);font-size:11px;color:var(--fg-2);letter-spacing:.04em;border-top:1px solid var(--line)}
+.vitrine figcaption b{display:block;color:var(--fg);font-weight:500;margin-bottom:2px}
+
+/* two doors */
+.doors{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}
+.door{background:var(--bg-2);padding:28px 26px 30px;display:grid;gap:14px;align-content:start;min-width:0;border-top:3px solid var(--accent)}
+.door .tag{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-2)}
+.door .tag b{color:var(--accent);font-weight:500}
+.door h3{font-size:clamp(28px,3.4vw,38px)}
+.door p{font-size:15px;color:var(--fg-2)}
+.door ul{margin:0;padding-left:1.1em;font-size:14px;color:var(--fg-2);display:grid;gap:5px}
+.door ul li::marker{color:var(--accent)}
+.door .out{font-family:var(--mono);font-size:13px;color:var(--fg);border-top:1px solid var(--line);padding-top:12px}
+.door .cta{margin-top:4px}
+
 /* what is not included + brief */
 .two{display:grid;grid-template-columns:1fr 1fr;gap:24px 48px}
 .list{margin:0;padding:0;list-style:none;display:grid;border-top:1px solid var(--line)}
@@ -163,9 +195,11 @@ ol.list li::before{counter-increment:q;content:counter(q,decimal-leading-zero);f
 @media (max-width:980px){
   .fits,.packs{grid-template-columns:repeat(2,1fr)}
   .method{grid-template-columns:repeat(2,1fr)}
+  .projs{grid-template-columns:repeat(2,1fr)}
+  .vitrine{grid-template-columns:repeat(3,1fr)}
 }
 @media (max-width:760px){
-  .sec-head,.case,.two{grid-template-columns:1fr}
+  .sec-head,.case,.two,.doors{grid-template-columns:1fr}
   .specs{grid-template-columns:1fr 1fr}
   .specs > div{padding-left:0 !important;border-right:0;border-top:1px solid var(--line)}
   .specs > div:nth-child(-n+2){border-top:0}
@@ -180,7 +214,8 @@ ol.list li::before{counter-increment:q;content:counter(q,decimal-leading-zero);f
   section{padding-block:64px 0}
 }
 @media (max-width:460px){
-  .fits,.packs,.method{grid-template-columns:1fr}
+  .fits,.packs,.method,.projs{grid-template-columns:1fr}
+  .vitrine{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
@@ -190,9 +225,10 @@ ol.list li::before{counter-increment:q;content:counter(q,decimal-leading-zero);f
   <div class="wrap gutter">
     <a class="brand" href="#top" aria-label="dinanco, início"><img src="img/dinanco-wordmark.png" alt="dinanco" style="height:26px;width:auto;display:block"></a>
     <nav class="nav" aria-label="Seções">
+      <a href="#projetos">Projetos</a>
+      <a href="#pecas">Peças</a>
+      <a href="#servicos">Serviços</a>
       <a href="#como">Como funciona</a>
-      <a href="#pacotes">Pacotes</a>
-      <a href="#casos">Casos</a>
       <a href="#contato">Contato</a>
       <a href="index.html">FEISAR (EN)</a>
     </nav>
@@ -206,7 +242,7 @@ ol.list li::before{counter-increment:q;content:counter(q,decimal-leading-zero);f
     <p class="lede">Você me manda o STL que não funciona, fotos com régua ou a própria peça. Eu refaço no CAD com as medidas certas, confiro o encaixe por simulação antes de imprimir e entrego testado num protótipo.</p>
     <div class="cta">
       <a class="btn primary" href="#contato">Falar comigo</a>
-      <a class="btn" href="#casos">Ver casos</a>
+      <a class="btn" href="#projetos">Ver projetos</a>
     </div>
   </div>
 </section>
@@ -218,6 +254,183 @@ ol.list li::before{counter-increment:q;content:counter(q,decimal-leading-zero);f
     <div><dt>Protótipo</dt><dd>Bambu Lab A1<small>PLA, PETG, TPU, até 4 cores</small></dd></div>
     <div><dt>Entrega</dt><dd>Arquivos + relatório<small>o que foi e o que não foi verificado</small></dd></div>
   </dl>
+
+  <section id="projetos">
+    <div class="sec-head reveal">
+      <div>
+        <p class="eyebrow">Projetos</p>
+        <h2>O que eu já fiz</h2>
+      </div>
+      <p class="muted">Projetos próprios, de ponta a ponta: CAD, simulação, peça impressa. O FEISAR é o maior e o mais longo. Os outros são menores e mostram a mesma lógica em escalas diferentes. Casos de clientes entram aqui com a autorização de cada um.</p>
+    </div>
+    <div class="cases">
+      <article class="case reveal">
+        <div class="case-img">
+          <div class="duo">
+            <img src="img/inside-49.jpg" alt="Redutor planetário impresso 1:49 aberto, mostrando as engrenagens" loading="lazy">
+            <img src="img/rpv1b-cad.jpg" alt="Modelo CAD da base do braço, módulos impressos planos" loading="lazy">
+          </div>
+          <figure><figcaption>FEISAR · redutor 1:49 impresso e base RPV1-B no CAD</figcaption></figure>
+        </div>
+        <div class="case-text">
+          <span class="status">Projeto próprio · desde 2020</span>
+          <h3>FEISAR: braço robótico com redutores impressos</h3>
+          <p class="muted">Um braço de quatro eixos impresso em 3D, sobre redutores planetários que eu projetei e imprimi. É o projeto onde o método deste serviço nasceu. Cada peça da revisão atual é gerada por script contra o CAD do Inventor e conferida antes de ir para a impressora.</p>
+          <div class="kv">
+            <div><span>Poses checadas contra colisão, por versão</span><span>124.416</span></div>
+            <div><span>Folga achada na base antiga</span><span class="hot">0,7° · 8 mm na ponta</span></div>
+            <div><span>Tensão no dente do sol, motor travado</span><span class="hot">152 MPa vs 25 admissível</span></div>
+            <div><span>Redução</span><span>1:49, dois estágios 1:7</span></div>
+          </div>
+          <div class="cta"><a class="btn" href="index.html">Ver o registro completo (EN)</a><a class="btn" href="exploded.html">Vista explodida 3D</a></div>
+        </div>
+      </article>
+    </div>
+
+    <div class="projs reveal">
+      <article class="proj">
+        <img src="img/projetos/quadribot.jpg" alt="Modelo CAD do robô de quatro patas, corpo em X com oito servos" loading="lazy">
+        <div class="body">
+          <h3>Robô de quatro patas</h3>
+          <p>Oito micro servos, dois por pata: quadril e joelho. Corpo em X e pé em garra, cada um em três versões até o encaixe do servo ficar justo. Segunda geração de um robô que andou mal; esta nasceu do que a primeira ensinou sobre encaixe, aderência e peso.</p>
+          <ul class="facts">
+            <li><span>Servos</span><span>8 × SG90</span></li>
+            <li><span>Montagem</span><span>205 × 89 × 253 mm</span></li>
+            <li><span>Versões de corpo e garra</span><span>3 e 3</span></li>
+            <li><span>Estado</span><span>CAD e peças de teste</span></li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="proj">
+        <img src="img/projetos/alimentador.jpg" alt="Modelo CAD do alimentador: funil, válvula com servo, cano curvo e bandeja" loading="lazy">
+        <div class="body">
+          <h3>Alimentador automático de cachorro</h3>
+          <p>Funil de ração, válvula rotativa girada por um servo através de um par de engrenagens, cano curvo e bandeja. O conjunto foi desenhado para um canto de parede, com as paredes simuladas no CAD para acertar a fixação.</p>
+          <ul class="facts">
+            <li><span>Válvula</span><span>disco rotativo Ø 44 mm</span></li>
+            <li><span>Redução</span><span>3,7:1 por engrenagens</span></li>
+            <li><span>Reservatório</span><span>180 mm de altura</span></li>
+            <li><span>Peças impressas</span><span>11</span></li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="proj">
+        <img src="img/projetos/suporte-celular.jpg" alt="Suporte de celular motorizado: base de compensado, barra e garras impressas" loading="lazy">
+        <div class="body">
+          <h3>Suporte de celular motorizado</h3>
+          <p>Um servo de 12 kg·cm por baixo de uma base de compensado move a barra que segura o celular. Quatro peças impressas; o resto é madeira e parafuso. A montagem está documentada em vistas explodidas, para outra pessoa montar.</p>
+          <ul class="facts">
+            <li><span>Servo</span><span>HX12K · 12 kg·cm</span></li>
+            <li><span>Base</span><span>200 × 200 mm</span></li>
+            <li><span>Peças impressas</span><span>4</span></li>
+            <li><span>Documentação</span><span>3 vistas explodidas</span></li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="proj">
+        <img src="img/projetos/mesa.jpg" alt="Mesa redonda de três pés no CAD, tampo de madeira e patas torneadas" loading="lazy">
+        <div class="body">
+          <h3>Mesa de três pés</h3>
+          <p>Tampo redondo de 800 mm sobre três patas torneadas. A parte impressa é o que a madeira não resolve sozinha: a presilha que abraça cada pata e a chapa que une as três ao tampo, com a furação já no modelo.</p>
+          <ul class="facts">
+            <li><span>Tampo</span><span>Ø 800 mm</span></li>
+            <li><span>Patas</span><span>3 × Ø 42 × 765 mm</span></li>
+            <li><span>Impresso</span><span>presilha e chapa-suporte</span></li>
+            <li><span>Presilha</span><span>50 × 85 × 18 mm</span></li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="proj">
+        <img src="img/projetos/pneumatica.jpg" alt="Estação pneumática no CAD: mesa com objeto, pistões ejetores, cancela e conector SCARA" loading="lazy">
+        <div class="body">
+          <h3>Estação pneumática</h3>
+          <p>Trabalho de faculdade: mesa com objeto, quatro pistões ejetores com suporte, pistão central, cancela e um conector SCARA, montados com fixadores de norma e apresentados em vistas explodidas. Mecanismo simulado antes de existir.</p>
+          <ul class="facts">
+            <li><span>Peças</span><span>26, com fixadores ISO</span></li>
+            <li><span>Atuadores</span><span>5 pistões</span></li>
+            <li><span>Envelope</span><span>428 × 530 × 723 mm</span></li>
+            <li><span>Documentação</span><span>2 vistas explodidas</span></li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="proj">
+        <img src="img/projetos/usinagem.jpg" alt="Peça torneada com ranhuras e furo central, modelada para a aula de usinagem" loading="lazy">
+        <div class="body">
+          <h3>Peça para usinagem</h3>
+          <p>Da disciplina de usinagem: a peça torneada com ranhuras, rebaixo e furo, modelada junto com o bruto cilíndrico de onde ela sai. Desenho pensado para a máquina, não só para a impressora: STEP e OBJ exportados para o CAM.</p>
+          <ul class="facts">
+            <li><span>Peça</span><span>Ø 46 × 50 mm</span></li>
+            <li><span>Bruto</span><span>Ø 50 × 120 mm</span></li>
+            <li><span>Processo</span><span>torneamento</span></li>
+            <li><span>Saída para CAM</span><span>STEP e OBJ</span></li>
+          </ul>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section id="pecas">
+    <div class="sec-head reveal">
+      <div>
+        <p class="eyebrow">Peças</p>
+        <h2>Sob medida para a casa</h2>
+      </div>
+      <p class="muted">Pequenas, úteis e medidas no lugar: o furo da pia com o paquímetro, a chapa da prateleira, o copo que pesa 130 g de arroz. É o que entra pela porta "só imprimir": você manda a medida ou a foto, eu modelo e imprimo.</p>
+    </div>
+    <div class="vitrine reveal">
+      <figure><img src="img/projetos/pia-medida.jpg" alt="Furo da pia de granito medido com paquímetro" loading="lazy"><figcaption><b>O furo da pia</b>medido no lugar</figcaption></figure>
+      <figure><img src="img/projetos/tampa-pia.jpg" alt="Tampão impresso para o furo da pia" loading="lazy"><figcaption><b>Tampão da pia</b>Ø 44 × 17 mm</figcaption></figure>
+      <figure><img src="img/projetos/apoio-note.jpg" alt="Apoio de notebook em perfil triangular" loading="lazy"><figcaption><b>Apoio de notebook</b>181 × 128 mm</figcaption></figure>
+      <figure><img src="img/projetos/medidor-arroz.jpg" alt="Copo medidor de arroz com cabo" loading="lazy"><figcaption><b>Medidor de arroz</b>calibrado para 130 g</figcaption></figure>
+      <figure><img src="img/projetos/suporte-prateleira.jpg" alt="Suporte de prateleira com aba curva" loading="lazy"><figcaption><b>Suporte de prateleira</b>chapa de 17 mm</figcaption></figure>
+      <figure><img src="img/projetos/caixinha-mural.jpg" alt="Caixinha de parede com furos de fixação" loading="lazy"><figcaption><b>Caixinha de parede</b>75 × 40 × 50 mm</figcaption></figure>
+      <figure><img src="img/projetos/potinho.jpg" alt="Potinho retangular aberto" loading="lazy"><figcaption><b>Potinho de sal</b>100 × 40 × 80 mm</figcaption></figure>
+      <figure><img src="img/projetos/calco.jpg" alt="Cunha calço de porta" loading="lazy"><figcaption><b>Calço de porta</b>53 × 25 × 15 mm</figcaption></figure>
+      <figure><img src="img/projetos/mesa-presilha.jpg" alt="Presilha impressa que abraça a pata da mesa" loading="lazy"><figcaption><b>Presilha da mesa</b>a peça impressa da mesa de três pés</figcaption></figure>
+      <figure><img src="img/projetos/boneco.jpg" alt="Boneco de enfermeira impresso em quatro cores, três vistas" loading="lazy"><figcaption><b>Boneco em 4 cores</b>134 mm, presente</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="servicos">
+    <div class="sec-head reveal">
+      <div>
+        <p class="eyebrow">Duas portas</p>
+        <h2>Imprimir ou projetar</h2>
+      </div>
+      <p class="muted">Todo pedido entra por uma destas duas portas. A primeira é rápida de cotar; a segunda começa com uma conversa e uma estimativa de horas.</p>
+    </div>
+    <div class="doors reveal">
+      <article class="door">
+        <p class="tag"><span>Porta 1</span> &nbsp;·&nbsp; <b>Só imprimir</b></p>
+        <h3>Você já tem o arquivo</h3>
+        <p>STL ou 3MF pronto. Eu confiro a malha, fatio para a Bambu Lab A1 e imprimo em PLA, PETG ou TPU, com até quatro cores. A cotação sai por grama e hora de impressão.</p>
+        <ul>
+          <li>Confiro parede, suporte e orientação antes de fatiar</li>
+          <li>Peça de teste de folga quando há encaixe ou rosca</li>
+          <li>Entrega em Porto Alegre ou pelo correio</li>
+        </ul>
+        <p class="out">Cotação no mesmo dia, pelo arquivo</p>
+        <div class="cta"><a class="btn primary" href="#contato">Mandar o arquivo</a></div>
+      </article>
+      <article class="door">
+        <p class="tag"><span>Porta 2</span> &nbsp;·&nbsp; <b>Projeto</b></p>
+        <h3>Você tem o problema</h3>
+        <p>Uma peça que não funciona, uma ideia ou um produto com placa dentro. Eu modelo no Inventor, confiro por simulação e entrego o protótipo impresso junto com os arquivos.</p>
+        <ul>
+          <li>Briefing curto e estimativa de horas antes de começar</li>
+          <li>Rodadas de ajuste combinadas no início</li>
+          <li>STL, STEP e, quando precisar, os arquivos nativos</li>
+        </ul>
+        <p class="out">Proposta a partir das horas estimadas sobre o seu caso</p>
+        <div class="cta"><a class="btn" href="#pacotes">Ver os quatro pacotes</a><a class="btn" href="#briefing">O que me mandar</a></div>
+      </article>
+    </div>
+  </section>
 
   <section id="para-quem">
     <div class="sec-head reveal">
@@ -256,10 +469,10 @@ ol.list li::before{counter-increment:q;content:counter(q,decimal-leading-zero);f
   <section id="pacotes">
     <div class="sec-head reveal">
       <div>
-        <p class="eyebrow">Pacotes</p>
-        <h2>Preço fechado</h2>
+        <p class="eyebrow">Pacotes da porta 2</p>
+        <h2>O que costuma chegar</h2>
       </div>
-      <p class="muted">Depois do briefing você recebe uma proposta com escopo, prazo e valor fechado. Os valores abaixo são o ponto de partida.</p>
+      <p class="muted">Quatro tamanhos de trabalho, com o que entra em cada um e o tempo que eles costumam levar. O valor de cada trabalho vem na proposta, a partir das horas estimadas sobre o seu arquivo.</p>
     </div>
     <div class="packs reveal">
       <div class="pack">
@@ -267,66 +480,31 @@ ol.list li::before{counter-increment:q;content:counter(q,decimal-leading-zero);f
         <h3>Ajuste de STL</h3>
         <p>Abrir folga, corrigir furo, engrossar parede ou escalar para outra medida.</p>
         <ul><li>STL corrigido</li><li>1 rodada de ajuste</li><li>2 a 3 dias úteis</li></ul>
-        <p class="price">a partir de <b>R$ 150</b></p>
+        <p class="price">costuma levar <b>1 a 3 h</b></p>
       </div>
       <div class="pack">
         <p class="tag"><span>Pacote</span><b>B</b></p>
         <h3>Redesenho de peça</h3>
         <p>Peça única refeita no CAD a partir de STL, fotos ou da peça física, com encaixe.</p>
         <ul><li>STL e STEP</li><li>Peça de teste de folga</li><li>2 rodadas</li></ul>
-        <p class="price">a partir de <b>R$ 450</b></p>
+        <p class="price">costuma levar <b>4 a 7 h</b></p>
       </div>
       <div class="pack">
         <p class="tag"><span>Pacote</span><b>C</b></p>
         <h3>Conjunto com eletrônica</h3>
         <p>De 2 a 6 peças com placa, bateria, rosca ou snap. Botão com curso e clique.</p>
         <ul><li>Montagem virtual sem interferência</li><li>Simulação de curso e força</li><li>1 protótipo impresso e 2 rodadas</li></ul>
-        <p class="price">a partir de <b>R$ 1.000</b></p>
+        <p class="price">costuma levar <b>8 a 16 h</b></p>
       </div>
       <div class="pack">
         <p class="tag"><span>Pacote</span><b>D</b></p>
         <h3>Produto completo</h3>
         <p>Gabinete de produto com várias peças, fixação, acesso a conectores e desenho 2D de fabricação.</p>
         <ul><li>Tudo do C, mais desenhos 2D</li><li>2 protótipos e 3 rodadas</li><li>3 a 6 semanas</li></ul>
-        <p class="price"><b>sob proposta</b></p>
+        <p class="price">costuma levar <b>16 a 40 h</b></p>
       </div>
     </div>
-    <p class="fine">Arquivos nativos do Inventor, com histórico paramétrico, e unidades impressas além do protótipo são cobrados à parte. Pagamento por Pix, com entrada na aprovação e o restante na entrega.</p>
-  </section>
-
-  <section id="casos">
-    <div class="sec-head reveal">
-      <div>
-        <p class="eyebrow">Casos</p>
-        <h2>O que já passou pela bancada</h2>
-      </div>
-      <p class="muted">Simulado aparece marcado como simulado. O número medido substitui o simulado quando o teste fica pronto. Casos de clientes entram aqui com a autorização de cada um.</p>
-    </div>
-    <div class="cases">
-
-      <article class="case reveal">
-        <div class="case-img">
-          <div class="duo">
-            <img src="img/inside-49.jpg" alt="Redutor planetário impresso 1:49 aberto, mostrando as engrenagens" loading="lazy">
-            <img src="img/rpv1b-cad.jpg" alt="Modelo CAD da base do braço, módulos impressos planos" loading="lazy">
-          </div>
-          <figure><figcaption>FEISAR · redutor 1:49 impresso e base RPV1-B no CAD</figcaption></figure>
-        </div>
-        <div class="case-text">
-          <span class="status">Projeto próprio · desde 2020</span>
-          <h3>FEISAR: braço robótico com redutores impressos</h3>
-          <p class="muted">Um braço de quatro eixos impresso em 3D, sobre redutores planetários que eu projetei e imprimi. É o projeto onde o método deste serviço nasceu. Cada peça da revisão atual é gerada por script contra o CAD do Inventor e conferida antes de ir para a impressora.</p>
-          <div class="kv">
-            <div><span>Poses checadas contra colisão, por versão</span><span>124.416</span></div>
-            <div><span>Folga achada na base antiga</span><span class="hot">0,7° · 8 mm na ponta</span></div>
-            <div><span>Tensão no dente do sol, motor travado</span><span class="hot">152 MPa vs 25 admissível</span></div>
-            <div><span>Redução</span><span>1:49, dois estágios 1:7</span></div>
-          </div>
-          <div class="cta"><a class="btn" href="index.html">Ver o registro completo (EN)</a><a class="btn" href="exploded.html">Vista explodida 3D</a></div>
-        </div>
-      </article>
-
-    </div>
+    <p class="fine">As horas são o que eu meço nos projetos que já fiz. Um ajuste de STL pode ser uma folga de cinco minutos ou uma rosca inteira refeita; por isso o número vem da análise do seu arquivo, antes de começar.</p>
   </section>
 
   <section id="briefing">
@@ -371,11 +549,11 @@ ol.list li::before{counter-increment:q;content:counter(q,decimal-leading-zero);f
     <footer class="titleblock" aria-label="Carimbo">
       <div><span class="k">Marca</span><span class="big">DINANCO</span></div>
       <div><span class="k">Desenhado por</span>João Pedro Pinheiro Alves</div>
-      <div><span class="k">Rev</span><span class="big">0</span></div>
+      <div><span class="k">Rev</span><span class="big">1</span></div>
       <div><span class="k">Data</span>2026-11-03</div>
       <div><span class="k">Título</span>Projeto mecânico e protótipos impressos</div>
       <div><span class="k">Local</span>Porto Alegre, RS</div>
-      <div><span class="k">Status</span>Rev 0, primeira versão</div>
+      <div><span class="k">Status</span>Rev 1, projetos e peças</div>
       <div><span class="k">Folha</span>1 de 1</div>
     </footer>
   </section>
