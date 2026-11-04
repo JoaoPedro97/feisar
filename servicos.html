@@ -149,7 +149,7 @@ section{padding-block:88px 0}
 .proj .facts li span:last-child{text-align:right;font-variant-numeric:tabular-nums}
 
 /* showcase of small parts */
-.vitrine{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.vitrine{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
 .vitrine figure{margin:0;background:var(--bg-2);min-width:0}
 .vitrine img{width:100%;aspect-ratio:1/1;object-fit:cover}
 .vitrine figcaption{padding:8px 10px 10px;font-family:var(--mono);font-size:11px;color:var(--fg-2);letter-spacing:.04em;border-top:1px solid var(--line)}
@@ -196,7 +196,6 @@ ol.list li::before{counter-increment:q;content:counter(q,decimal-leading-zero);f
   .fits,.packs{grid-template-columns:repeat(2,1fr)}
   .method{grid-template-columns:repeat(2,1fr)}
   .projs{grid-template-columns:repeat(2,1fr)}
-  .vitrine{grid-template-columns:repeat(3,1fr)}
 }
 @media (max-width:760px){
   .sec-head,.case,.two,.doors{grid-template-columns:1fr}
@@ -215,7 +214,8 @@ ol.list li::before{counter-increment:q;content:counter(q,decimal-leading-zero);f
 }
 @media (max-width:460px){
   .fits,.packs,.method,.projs{grid-template-columns:1fr}
-  .vitrine{grid-template-columns:repeat(2,1fr)}
+  .vitrine{grid-template-columns:1fr}
+  .vitrine img{aspect-ratio:4/3}
 }
 </style>
 </head>
@@ -261,7 +261,7 @@ ol.list li::before{counter-increment:q;content:counter(q,decimal-leading-zero);f
         <p class="eyebrow">Projetos</p>
         <h2>O que eu já fiz</h2>
       </div>
-      <p class="muted">Projetos próprios, de ponta a ponta: CAD, simulação, peça impressa. O FEISAR é o maior e o mais longo. Os outros são menores e mostram a mesma lógica em escalas diferentes. Casos de clientes entram aqui com a autorização de cada um.</p>
+      <p class="muted">Projetos próprios, de ponta a ponta: CAD, simulação, peça impressa. O FEISAR é o maior e o mais longo; o alimentador é um mecanismo completo em escala de bancada. Os cards menores mostram a mesma lógica em outras escalas. Casos de clientes entram aqui com a autorização de cada um.</p>
     </div>
     <div class="cases">
       <article class="case reveal">
@@ -285,6 +285,29 @@ ol.list li::before{counter-increment:q;content:counter(q,decimal-leading-zero);f
           <div class="cta"><a class="btn" href="index.html">Ver o registro completo (EN)</a><a class="btn" href="exploded.html">Vista explodida 3D</a></div>
         </div>
       </article>
+
+      <article class="case reveal">
+        <div class="case-img">
+          <div class="duo">
+            <img src="img/projetos/alimentador.jpg" alt="Modelo CAD do alimentador de animais: funil, válvula com servo, cano curvo e bandeja" loading="lazy">
+            <img src="img/projetos/alimentador-interno.jpg" alt="Interior do alimentador sem o funil: disco da válvula, engrenagens e servo" loading="lazy">
+          </div>
+          <figure><figcaption>Alimentador de animais · conjunto e interior sem o funil</figcaption></figure>
+        </div>
+        <div class="case-text">
+          <span class="status">Projeto próprio · 2025</span>
+          <h3>Alimentador de animais com válvula rotativa</h3>
+          <p class="muted">Um reservatório em funil guarda a ração. Na saída, um disco com uma janela gira dentro de um corpo fechado: parado, segura a coluna de ração; a cada giro parcial, deixa passar uma dose. Quem gira o disco é um micro servo, por um par de engrenagens que multiplica o torque por 3,7. A dose desce por um cano curvo até a bandeja, que tem uma chapa fina no fundo para receber um sensor.</p>
+          <p class="muted">O conjunto foi desenhado para um canto de parede. As duas paredes estão no CAD, para a fixação e as distâncias serem conferidas antes de imprimir. As engrenagens saíram da mesma planilha de cálculo usada no FEISAR.</p>
+          <div class="kv">
+            <div><span>Válvula</span><span>disco Ø 44 mm em corpo de 63 × 70 × 56</span></div>
+            <div><span>Acionamento</span><span>servo SG90 · engrenagens Ø 17 e Ø 63</span></div>
+            <div><span>Redução</span><span class="hot">3,7:1</span></div>
+            <div><span>Reservatório</span><span>123 × 180 × 76 mm</span></div>
+            <div><span>Peças impressas</span><span>11, STL prontos</span></div>
+          </div>
+        </div>
+      </article>
     </div>
 
     <div class="projs reveal">
@@ -302,35 +325,7 @@ ol.list li::before{counter-increment:q;content:counter(q,decimal-leading-zero);f
         </div>
       </article>
 
-      <article class="proj">
-        <img src="img/projetos/alimentador.jpg" alt="Modelo CAD do alimentador: funil, válvula com servo, cano curvo e bandeja" loading="lazy">
-        <div class="body">
-          <h3>Alimentador automático de cachorro</h3>
-          <p>Funil de ração, válvula rotativa girada por um servo através de um par de engrenagens, cano curvo e bandeja. O conjunto foi desenhado para um canto de parede, com as paredes simuladas no CAD para acertar a fixação.</p>
-          <ul class="facts">
-            <li><span>Válvula</span><span>disco rotativo Ø 44 mm</span></li>
-            <li><span>Redução</span><span>3,7:1 por engrenagens</span></li>
-            <li><span>Reservatório</span><span>180 mm de altura</span></li>
-            <li><span>Peças impressas</span><span>11</span></li>
-          </ul>
-        </div>
-      </article>
-
-      <article class="proj">
-        <img src="img/projetos/suporte-celular.jpg" alt="Suporte de celular motorizado: base de compensado, barra e garras impressas" loading="lazy">
-        <div class="body">
-          <h3>Suporte de celular motorizado</h3>
-          <p>Um servo de 12 kg·cm por baixo de uma base de compensado move a barra que segura o celular. Quatro peças impressas; o resto é madeira e parafuso. A montagem está documentada em vistas explodidas, para outra pessoa montar.</p>
-          <ul class="facts">
-            <li><span>Servo</span><span>HX12K · 12 kg·cm</span></li>
-            <li><span>Base</span><span>200 × 200 mm</span></li>
-            <li><span>Peças impressas</span><span>4</span></li>
-            <li><span>Documentação</span><span>3 vistas explodidas</span></li>
-          </ul>
-        </div>
-      </article>
-
-      <article class="proj">
+                  <article class="proj">
         <img src="img/projetos/mesa.jpg" alt="Mesa redonda de três pés no CAD, tampo de madeira e patas torneadas" loading="lazy">
         <div class="body">
           <h3>Mesa de três pés</h3>
@@ -344,21 +339,7 @@ ol.list li::before{counter-increment:q;content:counter(q,decimal-leading-zero);f
         </div>
       </article>
 
-      <article class="proj">
-        <img src="img/projetos/pneumatica.jpg" alt="Estação pneumática no CAD: mesa com objeto, pistões ejetores, cancela e conector SCARA" loading="lazy">
-        <div class="body">
-          <h3>Estação pneumática</h3>
-          <p>Trabalho de faculdade: mesa com objeto, quatro pistões ejetores com suporte, pistão central, cancela e um conector SCARA, montados com fixadores de norma e apresentados em vistas explodidas. Mecanismo simulado antes de existir.</p>
-          <ul class="facts">
-            <li><span>Peças</span><span>26, com fixadores ISO</span></li>
-            <li><span>Atuadores</span><span>5 pistões</span></li>
-            <li><span>Envelope</span><span>428 × 530 × 723 mm</span></li>
-            <li><span>Documentação</span><span>2 vistas explodidas</span></li>
-          </ul>
-        </div>
-      </article>
-
-      <article class="proj">
+            <article class="proj">
         <img src="img/projetos/usinagem.jpg" alt="Peça torneada com ranhuras e furo central, modelada para a aula de usinagem" loading="lazy">
         <div class="body">
           <h3>Peça para usinagem</h3>
@@ -380,19 +361,12 @@ ol.list li::before{counter-increment:q;content:counter(q,decimal-leading-zero);f
         <p class="eyebrow">Peças</p>
         <h2>Sob medida para a casa</h2>
       </div>
-      <p class="muted">Pequenas, úteis e medidas no lugar: o furo da pia com o paquímetro, a chapa da prateleira, o copo que pesa 130 g de arroz. É o que entra pela porta "só imprimir": você manda a medida ou a foto, eu modelo e imprimo.</p>
+      <p class="muted">Pequenas, úteis e medidas no lugar: a espessura da chapa da prateleira, o diâmetro da pata da mesa, a borda do notebook. É o que entra pela porta "só imprimir": você manda a medida ou a foto, eu modelo e imprimo.</p>
     </div>
     <div class="vitrine reveal">
-      <figure><img src="img/projetos/pia-medida.jpg" alt="Furo da pia de granito medido com paquímetro" loading="lazy"><figcaption><b>O furo da pia</b>medido no lugar</figcaption></figure>
-      <figure><img src="img/projetos/tampa-pia.jpg" alt="Tampão impresso para o furo da pia" loading="lazy"><figcaption><b>Tampão da pia</b>Ø 44 × 17 mm</figcaption></figure>
       <figure><img src="img/projetos/apoio-note.jpg" alt="Apoio de notebook em perfil triangular" loading="lazy"><figcaption><b>Apoio de notebook</b>181 × 128 mm</figcaption></figure>
-      <figure><img src="img/projetos/medidor-arroz.jpg" alt="Copo medidor de arroz com cabo" loading="lazy"><figcaption><b>Medidor de arroz</b>calibrado para 130 g</figcaption></figure>
       <figure><img src="img/projetos/suporte-prateleira.jpg" alt="Suporte de prateleira com aba curva" loading="lazy"><figcaption><b>Suporte de prateleira</b>chapa de 17 mm</figcaption></figure>
-      <figure><img src="img/projetos/caixinha-mural.jpg" alt="Caixinha de parede com furos de fixação" loading="lazy"><figcaption><b>Caixinha de parede</b>75 × 40 × 50 mm</figcaption></figure>
-      <figure><img src="img/projetos/potinho.jpg" alt="Potinho retangular aberto" loading="lazy"><figcaption><b>Potinho de sal</b>100 × 40 × 80 mm</figcaption></figure>
-      <figure><img src="img/projetos/calco.jpg" alt="Cunha calço de porta" loading="lazy"><figcaption><b>Calço de porta</b>53 × 25 × 15 mm</figcaption></figure>
       <figure><img src="img/projetos/mesa-presilha.jpg" alt="Presilha impressa que abraça a pata da mesa" loading="lazy"><figcaption><b>Presilha da mesa</b>a peça impressa da mesa de três pés</figcaption></figure>
-      <figure><img src="img/projetos/boneco.jpg" alt="Boneco de enfermeira impresso em quatro cores, três vistas" loading="lazy"><figcaption><b>Boneco em 4 cores</b>134 mm, presente</figcaption></figure>
     </div>
   </section>
 
@@ -553,7 +527,7 @@ ol.list li::before{counter-increment:q;content:counter(q,decimal-leading-zero);f
       <div><span class="k">Data</span>2026-11-03</div>
       <div><span class="k">Título</span>Projeto mecânico e protótipos impressos</div>
       <div><span class="k">Local</span>Porto Alegre, RS</div>
-      <div><span class="k">Status</span>Rev 1, projetos e peças</div>
+      <div><span class="k">Status</span>Rev 2, acervo enxuto</div>
       <div><span class="k">Folha</span>1 de 1</div>
     </footer>
   </section>
